@@ -22,6 +22,8 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.6; min-height: 100vh; }
+  button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  input, select, textarea { font-size: 16px !important; touch-action: manipulation; }
 
   /* HEADER */
   .header { padding: 24px 16px 12px; border-bottom: 1px solid var(--border); }
@@ -94,7 +96,7 @@
   .checklist { list-style: none; }
   .checklist li { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
   .checklist li:last-child { border-bottom: none; }
-  .check-box { width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 6px; flex-shrink: 0; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .check-box { width: 26px; height: 26px; border: 2px solid var(--border); border-radius: 6px; flex-shrink: 0; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; margin-top: 1px; -webkit-tap-highlight-color: transparent; }
   .check-box.checked { background: var(--accent); border-color: var(--accent); }
   .check-box.checked::after { content: "✓"; font-size: 13px; color: #000; font-weight: 700; }
   .checklist .sub-text { font-size: 12px; color: var(--muted); margin-top: 2px; }
@@ -135,12 +137,12 @@
   #session-search::placeholder { color:var(--muted); }
 
   .tc-tag { padding:4px 10px; border-radius:20px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-size:12px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
-  .tc-tag:hover { border-color:var(--accent); color:var(--text); }
+  .tc-tag:hover, .tc-tag:active { border-color:var(--accent); color:var(--text); }
   .tc-tag.active { background:var(--accent); border-color:var(--accent); color:#000; font-weight:600; }
   .tag-cloud-clear { font-size:11px; color:var(--muted); background:none; border:none; cursor:pointer; padding:4px 0; }
   .tag-cloud-clear:hover { color:var(--text); }
   .s-tags .tag { cursor:pointer; transition:opacity 0.15s; }
-  .s-tags .tag:hover { opacity:0.75; }
+  .s-tags .tag:hover, .s-tags .tag:active { opacity:0.75; }
   .session-item.custom-session { border-color: var(--accent); border-opacity: 0.4; }
   .custom-session .s-delete { float:right; background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; line-height:1; padding:0; margin-left:8px; }
   .custom-session .s-delete:hover { color:var(--red); }
@@ -173,22 +175,23 @@
   .week-session-chip { display:flex; justify-content:space-between; align-items:flex-start; background:var(--surface2); border-radius:8px; padding:7px 10px; font-size:12px; margin-bottom:4px; }
   .week-session-chip .chip-name { font-weight:600; }
   .week-session-chip .chip-desc { font-size:11px; color:var(--muted); margin-top:1px; }
-  .week-session-chip .chip-remove { background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:0 0 0 8px; line-height:1; flex-shrink:0; margin-top:1px; }
-  .week-session-chip .chip-remove:hover { color:var(--red); }
+  .week-session-chip .chip-remove { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:4px 4px 4px 12px; line-height:1; flex-shrink:0; margin-top:-2px; }
+  .week-session-chip .chip-remove:hover, .week-session-chip .chip-remove:active { color:var(--red); }
   .week-session-chip.type-run { border-left:3px solid var(--green); }
   .week-session-chip.type-strength { border-left:3px solid #c084fc; }
   .week-session-chip.type-metcon { border-left:3px solid var(--yellow); }
   .week-session-chip.type-recovery { border-left:3px solid var(--accent2); }
-  .session-add-btn { background:none; border:1px solid var(--border); color:var(--muted); font-size:11px; padding:3px 8px; border-radius:20px; cursor:pointer; margin-top:6px; white-space:nowrap; }
+  .session-add-btn { background:none; border:1px solid var(--border); color:var(--muted); font-size:12px; padding:6px 12px; border-radius:20px; cursor:pointer; margin-top:6px; white-space:nowrap; }
   .session-add-btn.has-day { border-color:var(--accent); color:var(--accent); }
-  .session-add-btn:hover { background:var(--accent); color:#000; border-color:var(--accent); }
+  .session-add-btn:hover, .session-add-btn:active { background:var(--accent); color:#000; border-color:var(--accent); }
 
   /* PLAN BUILDER */
   .builder-palette { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
   .palette-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:7px 12px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; transition:background 0.15s; }
   .palette-btn:active { background:var(--accent); color:#000; }
   .builder-chain { display:flex; flex-direction:column; gap:0; }
-  .builder-item { display:flex; align-items:stretch; gap:12px; cursor:grab; touch-action:none; }
+  .builder-item { display:flex; align-items:stretch; gap:12px; cursor:grab; }
+  .builder-item.touch-dragging { touch-action:none; }
   .builder-item.dragging { opacity:0.4; }
   .builder-item.drag-over { border-top:2px solid var(--accent); }
   .builder-item .b-line { display:flex; flex-direction:column; align-items:center; }
@@ -199,9 +202,9 @@
   .builder-item .b-name { font-size:14px; font-weight:600; }
   .builder-item .b-note { font-size:12px; color:var(--muted); background:none; border:none; border-bottom:1px solid transparent; outline:none; width:100%; margin-top:2px; font-family:var(--font); color:var(--muted); cursor:text; padding:0; }
   .builder-item .b-note:focus { border-bottom-color:var(--border); color:var(--text); }
-  .builder-item .b-delete { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:0 4px; align-self:flex-start; margin-top:2px; line-height:1; }
-  .builder-item .b-delete:hover { color:var(--red); }
-  .builder-drag-handle { color:var(--muted); font-size:14px; align-self:flex-start; margin-top:5px; cursor:grab; user-select:none; padding-right:2px; }
+  .builder-item .b-delete { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:4px 8px; align-self:flex-start; margin-top:0; line-height:1; }
+  .builder-item .b-delete:hover, .builder-item .b-delete:active { color:var(--red); }
+  .builder-drag-handle { color:var(--muted); font-size:14px; align-self:flex-start; margin-top:5px; cursor:grab; user-select:none; padding-right:2px; touch-action:none; }
   .builder-item.builder-current .b-name { color:var(--accent); }
   .b-set-current { background:none; border:none; color:var(--muted); font-size:11px; cursor:pointer; padding:3px 0 0; display:block; }
   .b-set-current:hover { color:var(--accent); }
@@ -412,7 +415,7 @@
 
     <div class="section-label">Weekly Structure</div>
     <div class="card">
-      <div class="row"><span class="key">Oly sessions</span><span class="val">2–3×/week via gym class or Weightlifting.ai block</span></div>
+      <div class="row"><span class="key">Oly sessions</span><span class="val">2–3×/week via class or Weightlifting.ai block</span></div>
       <div class="row"><span class="key">Squat day</span><span class="val">1× self-programmed, front squat priority — unless already covered inside Weightlifting.ai</span></div>
       <div class="row"><span class="key">Long run</span><span class="val">1× Z2, 45–60 min (non-negotiable — protect the base)</span></div>
       <div class="row"><span class="key">Quality run</span><span class="val">Reduce intensity by 10–15 s/km OR swap for easy 30 min jog</span></div>
@@ -428,7 +431,7 @@
     <div class="card">
       <div class="row"><span class="key">RSP 2×/week</span><span class="val">On back or front squat. Don't run RSP 3×/week alongside full Oly — too much CNS.</span></div>
       <div class="row"><span class="key">Velocity-based</span><span class="val">Better if Oly class volume is already high — lower residual fatigue.</span></div>
-      <div class="row"><span class="key">Weightlifting.ai</span><span class="val">Strong option for 6-week Oly-focused blocks. Let it be the main lifting anchor and do not layer extra squat volume on top if the program already includes squats and pulls.</span></div>
+      <div class="row"><span class="key">Weightlifting.ai</span><span class="val">Strong option for 6–12 week Oly-focused blocks. Let it be the main lifting anchor and do not layer extra squat volume on top if the program already includes squats and pulls.</span></div>
     </div>
 
     <div class="section-label">Block Goals</div>
@@ -934,7 +937,7 @@
     <div class="accordion-body open">
       <div class="why-box"><strong>Minimum viable dose:</strong> 2 runs + 1 squat + 1 metcon gives enough exposure to maintain running, strength, and conditioning without turning every week into a recovery problem.</div>
       <div class="why-box"><strong>Modular blocks:</strong> Rotating emphasis blocks lets you progress one quality without peaking everything at once. Don't run the same block for more than 10–12 weeks — the variation itself is part of the stimulus.</div>
-      <div class="why-box"><strong>Classes as anchors:</strong> Gym classes are fixed stressors. Self-programming fills gaps, not competes. This prevents you from doubling up hard sessions on adjacent days.</div>
+      <div class="why-box"><strong>Classes as anchors:</strong> Classes are fixed stressors. Self-programming fills gaps, not competes. This prevents you from doubling up hard sessions on adjacent days.</div>
       <div class="why-box"><strong>Quality filter for HYROX class running:</strong> Class running counts toward volume, but only replaces an interval run when you intentionally target pace on every split.</div>
       <div class="why-box"><strong>Velocity squats in HYROX blocks:</strong> Submaximal load (55–60% 1RM) with fast bar speed preserves neuromuscular power with less residual fatigue than heavy slow reps — meaning you can run Runna's full plan without compromise.</div>
       <div class="why-box"><strong>Skill before strength:</strong> Bodyweight and gymnastics skill work belongs early in the session while CNS is fresh. After heavy squats or a long run, movement quality degrades and so does skill acquisition.</div>
@@ -953,7 +956,7 @@
       <div class="why-box"><strong>24+ hours between hard endurance and heavy strength</strong> yields better strength adaptations. If you must stack on the same day, do strength before endurance and fuel aggressively in between.</div>
       <div class="why-box"><strong>Run club → next-day squats:</strong> Fine if squats stay lighter (RPE ≤7). Heavy build days are better 48 hrs after a hard interval session.</div>
       <div class="why-box"><strong>HYROX metcon → next-day squats:</strong> Light squats (3×3 RPE 7) are manageable. Avoid heavy builds — wait 48 hrs.</div>
-      <div class="why-box"><strong>Limit to 2–3 genuinely hard sessions per week</strong> (e.g. run club, HYROX class, and one heavy strength day). Everything else should be easy.</div>
+      <div class="why-box"><strong>Limit to 2–3 genuinely hard sessions per week</strong> (e.g. interval run, HYROX class, and one heavy strength day). Everything else should be easy.</div>
     </div>
   </div>
 
@@ -964,7 +967,7 @@
     </div>
     <div class="accordion-body">
       <div class="why-box"><strong>Stacking endurance + strength same day:</strong> Fuel hard between sessions. Residual glycogen depletion from a run will tank your strength. Get carbs + protein in the gap.</div>
-      <div class="why-box"><strong>Example:</strong> Wednesday run club (6×600 m) → 200 kcal carb snack + electrolytes + 30 min rest → Thursday light squats is OK. Thursday heavy squats is risky without adequate refuelling.</div>
+      <div class="why-box"><strong>Example:</strong> Interval run (6×600 m) → 200 kcal carb snack + electrolytes + 30 min rest → Thursday light squats is OK. Thursday heavy squats is risky without adequate refuelling.</div>
       <div class="why-box"><strong>Fatigue-first squat days (Z2 jog then squats):</strong> Eat light before the jog (e.g. banana), then fuel properly for the main squat lift. You want pre-fatigued legs, not a glycogen-depleted engine.</div>
     </div>
   </div>
@@ -1463,14 +1466,22 @@ function renderBuilderChain() {
       saveBuilderChain();
     });
 
-    // Touch drag
-    let touchStartY = 0, touchItem = null;
+    // Touch drag — long-press to activate (avoids hijacking scroll)
+    let touchStartY = 0, touchItem = null, longPressTimer = null, touchDragActive = false;
     item.addEventListener('touchstart', e => {
       touchStartY = e.touches[0].clientY;
       touchItem = item;
-      dragSrcIdx = i;
+      longPressTimer = setTimeout(() => {
+        touchDragActive = true;
+        dragSrcIdx = i;
+        item.classList.add('touch-dragging', 'dragging');
+      }, 200);
     }, { passive: true });
     item.addEventListener('touchmove', e => {
+      if (!touchDragActive) {
+        clearTimeout(longPressTimer);
+        return;
+      }
       e.preventDefault();
       const y = e.touches[0].clientY;
       const els = [...document.querySelectorAll('.builder-item')];
@@ -1482,6 +1493,10 @@ function renderBuilderChain() {
       if (target) target.classList.add('drag-over');
     }, { passive: false });
     item.addEventListener('touchend', e => {
+      clearTimeout(longPressTimer);
+      item.classList.remove('touch-dragging', 'dragging');
+      if (!touchDragActive) { touchDragActive = false; dragSrcIdx = null; return; }
+      touchDragActive = false;
       const y = e.changedTouches[0].clientY;
       const els = [...document.querySelectorAll('.builder-item')];
       els.forEach(el => el.classList.remove('drag-over'));
