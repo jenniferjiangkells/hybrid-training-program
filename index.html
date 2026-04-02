@@ -200,8 +200,8 @@
   .builder-item:last-child .b-connector { display:none; }
   .builder-item .b-content { flex:1; padding-bottom:14px; }
   .builder-item .b-name { font-size:14px; font-weight:600; }
-  .builder-item .b-note { font-size:12px; color:var(--muted); background:none; border:none; border-bottom:1px solid transparent; outline:none; width:100%; margin-top:2px; font-family:var(--font); padding:0; }
-  .builder-item .b-note:focus { border-bottom-color:var(--border); color:var(--text); }
+  .builder-item .b-note { font-size:12px; color:var(--muted); background:var(--surface2); border:1px solid var(--border); border-radius:6px; outline:none; width:100%; margin-top:6px; font-family:var(--font); padding:5px 8px; }
+  .builder-item .b-note:focus { border-color:var(--accent); color:var(--text); }
   .builder-item .b-delete { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:4px 8px; align-self:flex-start; margin-top:0; line-height:1; }
   .builder-item .b-delete:hover, .builder-item .b-delete:active { color:var(--red); }
   .builder-drag-handle { color:var(--muted); font-size:14px; align-self:flex-start; margin-top:5px; cursor:grab; user-select:none; padding-right:2px; touch-action:none; }
@@ -230,6 +230,10 @@
   .ref-item a:hover { text-decoration: underline; }
   .ref-item .ref-desc { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.6; }
   .why-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-top: 10px; font-size: 13px; line-height: 1.7; }
+
+  /* CURRENT BLOCK INDICATOR */
+  .current-block-indicator { font-size:12px; color:var(--accent); font-weight:600; margin-bottom:12px; min-height:0; }
+  .current-block-indicator:empty { display:none; }
 
   /* SYNC DOT */
   .sync-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); display:inline-block; margin-left:8px; vertical-align:middle; flex-shrink:0; }
@@ -760,6 +764,7 @@
 <!-- ========== SESSION MENU ========== -->
 <div id="page-sessions" class="page">
 
+  <div class="current-block-indicator"></div>
   <!-- PLAN -->
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
     <span class="section-label" style="margin:0;">Week Plan</span>
@@ -1074,6 +1079,7 @@
 
 <!-- ========== CHECKLIST ========== -->
 <div id="page-checklist" class="page">
+  <div class="current-block-indicator"></div>
   <div class="section-label">Weekly Check-In</div>
   <div class="card">
     <div class="card-title">Non-Negotiables</div>
@@ -1543,10 +1549,10 @@ function renderBuilderChain() {
       <div class="b-line"><div class="b-dot" style="background:${isCurrent ? 'var(--accent)' : def.dot}"></div><div class="b-connector"></div></div>
       <div class="b-content">
         <div class="b-name">${isCurrent ? '▶ ' : ''}${def.name}</div>
-        <input class="b-note" value="${(b.note ?? def.note).replace(/"/g,'&quot;')}" placeholder="${def.note}" oninput="updateBuilderNote(${i}, this.value)">
+        <input class="b-note" value="${(b.note ?? def.note).replace(/"/g,'&quot;')}" placeholder="${def.note}" oninput="builderBlocks[${i}].note=this.value" onblur="saveBuilderChain()">
         <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
           ${b.type !== 'race' ? `<span style="font-size:12px;color:var(--muted);">weeks:</span>
-          <input type="number" min="1" max="52" value="${b.weeks ?? def.weeks}" onchange="updateBuilderWeeks(${i}, this.value)" style="width:48px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:6px;font-size:12px;">` : ''}
+          <input type="number" min="1" max="52" value="${b.weeks ?? def.weeks}" onblur="updateBuilderWeeks(${i}, this.value)" style="width:48px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:6px;font-size:12px;">` : ''}
         </div>
         ${isCurrent ? `<div style="margin-top:6px;display:flex;gap:6px;align-items:center;">
           <select onchange="setCurrentWeek(this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:12px;">${weekOptions}</select>
@@ -1659,12 +1665,15 @@ function setCurrentWeek(week) {
 }
 
 function updateBlockDisplay(idx, week) {
-  const el = document.getElementById('current-block-display');
-  if (!el) return;
   const b = builderBlocks[idx];
-  if (b && week) el.textContent = BLOCK_DEFS[b.type].name + ' · ' + week;
-  else if (b) el.textContent = BLOCK_DEFS[b.type].name;
-  else el.textContent = '';
+  const text = b && week ? BLOCK_DEFS[b.type].name + ' · ' + week
+             : b ? BLOCK_DEFS[b.type].name
+             : '';
+  const header = document.getElementById('current-block-display');
+  if (header) header.textContent = text;
+  document.querySelectorAll('.current-block-indicator').forEach(el => {
+    el.textContent = text ? '▶ ' + text : '';
+  });
 }
 
 function restoreCurrentBlock() {
