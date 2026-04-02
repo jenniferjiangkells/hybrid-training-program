@@ -172,9 +172,10 @@
   .week-day-btn.selected .wdb-name { color:#000; }
   .week-day-btn .wdb-count { font-size:10px; color:var(--muted); }
   .week-day-btn.selected .wdb-count { color:#000; opacity:0.7; }
-  .week-session-chip { display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border-radius:8px; padding:5px 8px; font-size:12px; margin-bottom:4px; }
-  .week-session-chip .chip-name { font-weight:500; }
-  .week-session-chip .chip-remove { background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:0 0 0 8px; line-height:1; }
+  .week-session-chip { display:flex; justify-content:space-between; align-items:flex-start; background:var(--surface2); border-radius:8px; padding:7px 10px; font-size:12px; margin-bottom:4px; }
+  .week-session-chip .chip-name { font-weight:600; }
+  .week-session-chip .chip-desc { font-size:11px; color:var(--muted); margin-top:1px; }
+  .week-session-chip .chip-remove { background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:0 0 0 8px; line-height:1; flex-shrink:0; margin-top:1px; }
   .week-session-chip .chip-remove:hover { color:var(--red); }
   .week-session-chip.type-run { border-left:3px solid var(--green); }
   .week-session-chip.type-strength { border-left:3px solid #c084fc; }
@@ -778,18 +779,17 @@
 
   <div id="add-session-form" class="card" style="margin-bottom:12px;">
     <div class="card-title">Add Custom Session</div>
-    <input id="cs-name" type="text" placeholder="Session name (e.g. Pull-Up Sets)" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; margin-bottom:8px;">
-    <input id="cs-desc" type="text" placeholder="Description (optional)" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; margin-bottom:8px;">
-    <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-      <select id="cs-type" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; flex:1;">
-        <option value="strength">🏋️ Strength</option>
-        <option value="run">🏃 Run</option>
-        <option value="metcon">🔥 Metcon</option>
-        <option value="recovery">💤 Recovery</option>
-      </select>
-    </div>
-    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:5px;">Tags</div>
-    <div id="cs-tag-picker" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;"></div>
+    <input id="cs-name" type="text" placeholder="Session name" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; margin-bottom:6px;">
+    <input id="cs-desc" type="text" placeholder="Description (optional)" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px;">
+    <div style="border-top:1px solid var(--border); margin:10px 0;"></div>
+    <select id="cs-type" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; margin-bottom:10px;">
+      <option value="strength">🏋️ Strength</option>
+      <option value="run">🏃 Run</option>
+      <option value="metcon">🔥 Metcon</option>
+      <option value="recovery">💤 Recovery</option>
+    </select>
+    <div id="cs-tag-picker" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+    <div style="border-top:1px solid var(--border); margin:10px 0;"></div>
     <button onclick="addCustomSession()" style="background:var(--accent); color:#000; border:none; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">+ Add</button>
   </div>
 
@@ -1142,6 +1142,12 @@ function toggleAcc(header) {
   body.classList.toggle('open');
 }
 
+const TAG_COLOR = {
+  'Block A':'purple', 'Block B':'green', 'Block C':'blue', 'Block D':'grey', 'All blocks':'grey',
+  'Build':'blue', 'Peak':'green', 'Specific':'orange', 'Skill':'purple',
+};
+function tagColor(t) { return TAG_COLOR[t] || 'grey'; }
+
 const TAG_GROUPS = [
   { label: 'Block',  tags: ['Block A', 'Block B', 'Block C', 'Block D', 'All blocks'] },
   { label: 'Phase',  tags: ['Base', 'Build', 'Peak', 'Maintenance', 'Specific'] },
@@ -1154,13 +1160,9 @@ function renderTagCloud() {
   const cloud = document.getElementById('tag-cloud');
   if (!cloud) return;
   cloud.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'tag-cloud-row';
   TAG_GROUPS.forEach(group => {
-    const label = document.createElement('div');
-    label.className = 'tag-cloud-label';
-    label.textContent = group.label;
-    cloud.appendChild(label);
-    const row = document.createElement('div');
-    row.className = 'tag-cloud-row';
     group.tags.forEach(tag => {
       const btn = document.createElement('button');
       btn.className = 'tc-tag' + (activeTagFilters.has(tag) ? ' active' : '');
@@ -1168,8 +1170,8 @@ function renderTagCloud() {
       btn.onclick = () => toggleTagFilter(tag);
       row.appendChild(btn);
     });
-    cloud.appendChild(row);
   });
+  cloud.appendChild(row);
   if (activeTagFilters.size > 0) {
     const clear = document.createElement('button');
     clear.className = 'tag-cloud-clear';
@@ -1205,7 +1207,7 @@ function applyFilters() {
   const activeType = document.querySelector('.filter-btn.active')?.dataset?.type || 'all';
   const query = (document.getElementById('session-search')?.value || '').toLowerCase();
   document.querySelectorAll('.session-item:not(.custom-session)').forEach(item => {
-    const typeMatch = activeType === 'all' || activeType === 'custom' || item.dataset.type === activeType;
+    const typeMatch = activeType === 'all' || (activeType !== 'custom' && item.dataset.type === activeType);
     const itemTags = (item.dataset.tags || '').split('|');
     const tagMatch = activeTagFilters.size === 0 || [...activeTagFilters].every(t => itemTags.includes(t));
     const name = item.querySelector('.s-name')?.textContent.toLowerCase() || '';
@@ -1223,7 +1225,8 @@ document.getElementById('session-list').addEventListener('click', e => {
   const addBtn = e.target.closest('.session-add-btn');
   if (addBtn) {
     if (!selectedDay) { addBtn.textContent = '← pick a day first'; setTimeout(() => updateAddButtons(), 1500); return; }
-    addToDay(selectedDay, addBtn.dataset.sid, addBtn.dataset.sname, addBtn.dataset.stype);
+    const desc = addBtn.closest('.session-item')?.querySelector('.s-desc')?.textContent || '';
+    addToDay(selectedDay, addBtn.dataset.sid, addBtn.dataset.sname, addBtn.dataset.stype, desc);
   }
 });
 
@@ -1324,7 +1327,7 @@ function renderSelectedDay() {
   const sessions = weekPlan[selectedDay] || [];
   sessionList.innerHTML = sessions.map((s, i) => `
     <div class="week-session-chip type-${s.type}">
-      <span class="chip-name">${s.name}</span>
+      <div><div class="chip-name">${s.name}</div>${s.desc ? `<div class="chip-desc">${s.desc}</div>` : ''}</div>
       <button class="chip-remove" onclick="removeFromDay('${selectedDay}',${i})">×</button>
     </div>`).join('');
   empty.style.display = sessions.length ? 'none' : 'block';
@@ -1342,8 +1345,8 @@ function updateAddButtons() {
   });
 }
 
-function addToDay(day, id, name, type) {
-  weekPlan[day].push({ id, name, type });
+function addToDay(day, id, name, type, desc) {
+  weekPlan[day].push({ id, name, type, desc: desc || '' });
   saveWeekPlan();
   renderDayStrip();
 }
@@ -1597,7 +1600,7 @@ function renderCustomSessions() {
     const tagMatch = activeTagFilters.size === 0 || [...activeTagFilters].every(t => s.tags.includes(t));
     const searchMatch = !query || s.name.toLowerCase().includes(query) || (s.desc || '').toLowerCase().includes(query);
     if (!typeMatch || !tagMatch || !searchMatch) return;
-    const tagHTML = s.tags.map(t => `<span class="tag grey s-tags" style="cursor:pointer;" onclick="filterByTag('${t.replace(/'/g,"\\\'")}')">${t}</span>`).join('');
+    const tagHTML = s.tags.map(t => `<span class="tag ${tagColor(t)} s-tags" style="cursor:pointer;" onclick="filterByTag('${t.replace(/'/g,"\\\'")}')">${t}</span>`).join('');
     const addLabel = selectedDay ? `+ ${DAY_LABELS[selectedDay]}` : '+ add to day';
     const div = document.createElement('div');
     div.className = 'session-item custom-session';
@@ -1606,7 +1609,7 @@ function renderCustomSessions() {
       <div class="s-name">⭐ ${s.name}<button class="s-delete" onclick="deleteCustomSession(${s.id})" title="Delete">×</button></div>
       ${s.desc ? `<div class="s-desc">${s.desc}</div>` : ''}
       ${tagHTML ? `<div class="s-tags tags">${tagHTML}</div>` : ''}
-      <button class="session-add-btn${selectedDay ? ' has-day' : ''}" onclick="${selectedDay ? `addToDay('${selectedDay}','custom-${s.id}','${s.name.replace(/'/g,"\\'")}','${s.type}')` : `this.textContent='← pick a day first';setTimeout(()=>this.textContent='+ add to day',1500)`}">${addLabel}</button>`;
+      <button class="session-add-btn${selectedDay ? ' has-day' : ''}" onclick="${selectedDay ? `addToDay('${selectedDay}','custom-${s.id}','${s.name.replace(/'/g,"\\'")}','${s.type}','${(s.desc||'').replace(/'/g,"\\'")}')` : `this.textContent='← pick a day first';setTimeout(()=>this.textContent='+ add to day',1500)`}">${addLabel}</button>`;
     container.appendChild(div);
   });
 }
