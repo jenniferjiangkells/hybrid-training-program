@@ -959,6 +959,7 @@ function showPage(id) {
   const idx = pages.indexOf(id);
   if (idx >= 0) document.querySelectorAll('.nav button')[idx].classList.add('active');
   window.scrollTo(0, 0);
+  localStorage.setItem('lastPage', id);
 }
 
 function showBlock(id) {
@@ -988,6 +989,7 @@ function filterSessions(type, btn) {
 
 function toggleCheck(box) {
   box.classList.toggle('checked');
+  saveChecklist();
 }
 
 function selectRPE(color, btn) {
@@ -1002,13 +1004,42 @@ function selectRPE(color, btn) {
   };
   const c = content[color];
   detail.innerHTML = '<div class="rpe-title">' + c.title + '</div>' + c.text;
+  localStorage.setItem('weekColour', color);
+}
+
+function saveChecklist() {
+  const boxes = document.querySelectorAll('.check-box');
+  const state = Array.from(boxes).map(b => b.classList.contains('checked'));
+  localStorage.setItem('checklistState', JSON.stringify(state));
+}
+
+function restoreChecklist() {
+  const saved = localStorage.getItem('checklistState');
+  if (saved) {
+    JSON.parse(saved).forEach((checked, i) => {
+      const boxes = document.querySelectorAll('.check-box');
+      if (boxes[i] && checked) boxes[i].classList.add('checked');
+    });
+  }
+  const colour = localStorage.getItem('weekColour');
+  if (colour) {
+    const btn = document.querySelector('.rpe-btn.' + colour + '-btn');
+    if (btn) selectRPE(colour, btn);
+  }
 }
 
 function resetChecklist() {
   document.querySelectorAll('.check-box').forEach(b => b.classList.remove('checked'));
   document.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('rpe-detail').style.display = 'none';
+  localStorage.removeItem('checklistState');
+  localStorage.removeItem('weekColour');
 }
+
+// Restore state on load
+const lastPage = localStorage.getItem('lastPage');
+if (lastPage) showPage(lastPage);
+restoreChecklist();
 </script>
 
 </body>
