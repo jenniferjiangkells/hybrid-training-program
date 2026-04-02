@@ -131,6 +131,9 @@
   .session-item .s-name { font-size: 14px; font-weight: 600; }
   .session-item .s-desc { font-size: 13px; color: var(--muted); margin-top: 3px; }
   .session-item .s-tags { margin-top: 8px; }
+  .s-tags .tag { cursor:pointer; transition:opacity 0.15s; }
+  .s-tags .tag:hover { opacity:0.75; }
+  .s-tags .tag.tag-active { outline:2px solid currentColor; outline-offset:1px; }
   .session-item.custom-session { border-color: var(--accent); border-opacity: 0.4; }
   .custom-session .s-delete { float:right; background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; line-height:1; padding:0; margin-left:8px; }
   .custom-session .s-delete:hover { color:var(--red); }
@@ -723,6 +726,11 @@
     <button class="filter-btn" data-type="recovery" onclick="filterSessions('recovery', this)">💤 Recovery</button>
     <button class="filter-btn" data-type="custom" onclick="filterSessions('custom', this)">⭐ Custom</button>
   </div>
+  <div id="tag-filter-bar" style="display:none; align-items:center; gap:6px; padding:6px 0 2px;">
+    <span style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;">Tag</span>
+    <span id="tag-filter-label" class="tag grey" style="font-size:12px;"></span>
+    <button onclick="clearTagFilter()" style="background:none; border:none; color:var(--muted); font-size:13px; cursor:pointer; padding:0; line-height:1;">× clear</button>
+  </div>
 
   <div id="add-session-form" class="card" style="margin-bottom:12px;">
     <div class="card-title">Add Custom Session</div>
@@ -1063,15 +1071,56 @@ function toggleAcc(header) {
   body.classList.toggle('open');
 }
 
+let activeTagFilter = null;
+
 function filterSessions(type, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  btn.dataset.type = type;
+  applyFilters();
+}
+
+function filterByTag(tag) {
+  activeTagFilter = (activeTagFilter === tag) ? null : tag;
+  updateTagFilterBar();
+  applyFilters();
+}
+
+function clearTagFilter() {
+  activeTagFilter = null;
+  updateTagFilterBar();
+  applyFilters();
+}
+
+function updateTagFilterBar() {
+  const bar = document.getElementById('tag-filter-bar');
+  const label = document.getElementById('tag-filter-label');
+  if (activeTagFilter) {
+    bar.style.display = 'flex';
+    label.textContent = activeTagFilter;
+  } else {
+    bar.style.display = 'none';
+  }
+  // highlight matching tags in list
+  document.querySelectorAll('.s-tags .tag').forEach(t => {
+    t.classList.toggle('tag-active', t.textContent.trim() === activeTagFilter);
+  });
+}
+
+function applyFilters() {
+  const activeType = document.querySelector('.filter-btn.active')?.dataset?.type || 'all';
   document.querySelectorAll('.session-item:not(.custom-session)').forEach(item => {
-    item.style.display = (type === 'all' || type === 'custom' || item.dataset.type === type) ? 'block' : 'none';
+    const typeMatch = activeType === 'all' || activeType === 'custom' || item.dataset.type === activeType;
+    const tagMatch = !activeTagFilter || [...item.querySelectorAll('.s-tags .tag')].some(t => t.textContent.trim() === activeTagFilter);
+    item.style.display = (typeMatch && tagMatch) ? 'block' : 'none';
   });
   renderCustomSessions();
 }
+
+// Tag click delegation on session list
+document.getElementById('session-list').addEventListener('click', e => {
+  const tag = e.target.closest('.s-tags .tag');
+  if (tag) filterByTag(tag.textContent.trim());
+});
 
 function toggleCheck(box) {
   box.classList.toggle('checked');
@@ -1321,15 +1370,15 @@ function deleteCustomSession(id) {
 function renderCustomSessions() {
   const container = document.getElementById('custom-sessions');
   container.innerHTML = '';
-  const activeFilter = document.querySelector('.filter-btn.active')?.dataset?.type || 'all';
+  const activeType = document.querySelector('.filter-btn.active')?.dataset?.type || 'all';
   customSessions.forEach(s => {
-    if (activeFilter !== 'all' && activeFilter !== 'custom' && s.type !== activeFilter) return;
-    if (activeFilter === 'custom') {} // always show
-    const tagHTML = s.tags.map(t => `<span class="tag grey">${t}</span>`).join('');
+    const typeMatch = activeType === 'all' || activeType === 'custom' || s.type === activeType;
+    const tagMatch = !activeTagFilter || s.tags.some(t => t === activeTagFilter);
+    if (!typeMatch || !tagMatch) return;
+    const tagHTML = s.tags.map(t => `<span class="tag grey s-tags" style="cursor:pointer;" onclick="filterByTag('${t.replace(/'/g,"\\\'")}')">${t}</span>`).join('');
     const div = document.createElement('div');
     div.className = 'session-item custom-session';
     div.dataset.type = s.type;
-    div.dataset.custom = 'true';
     div.innerHTML = `
       <div class="s-name">⭐ ${s.name}<button class="s-delete" onclick="deleteCustomSession(${s.id})" title="Delete">×</button></div>
       ${s.desc ? `<div class="s-desc">${s.desc}</div>` : ''}
