@@ -152,6 +152,31 @@
   .chain-content .c-name { font-size: 14px; font-weight: 600; }
   .chain-content .c-dur { font-size: 12px; color: var(--muted); margin-top: 1px; }
 
+  /* WEEK PLAN */
+  .week-day { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:8px; }
+  .week-day-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .week-day-name { font-size:13px; font-weight:700; }
+  .week-day-name.today { color:var(--accent); }
+  .week-add-btn { background:none; border:1px solid var(--border); color:var(--muted); font-size:12px; padding:3px 10px; border-radius:20px; cursor:pointer; }
+  .week-add-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .week-sessions { display:flex; flex-direction:column; gap:5px; }
+  .week-session-chip { display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border-radius:8px; padding:6px 10px; font-size:13px; }
+  .week-session-chip .chip-name { font-weight:500; }
+  .week-session-chip .chip-type { font-size:11px; color:var(--muted); margin-top:1px; }
+  .week-session-chip .chip-remove { background:none; border:none; color:var(--muted); font-size:15px; cursor:pointer; padding:0 0 0 8px; line-height:1; }
+  .week-session-chip .chip-remove:hover { color:var(--red); }
+  .week-session-chip.type-run { border-left:3px solid var(--green); }
+  .week-session-chip.type-strength { border-left:3px solid #c084fc; }
+  .week-session-chip.type-metcon { border-left:3px solid var(--yellow); }
+  .week-session-chip.type-recovery { border-left:3px solid var(--accent2); }
+  .picker-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+  .picker-item:last-child { border-bottom:none; }
+  .picker-item:hover .picker-item-name { color:var(--accent); }
+  .picker-item-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .picker-item-name { font-size:14px; font-weight:500; }
+  .picker-item-desc { font-size:12px; color:var(--muted); margin-top:1px; }
+  .picker-group-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); padding:10px 0 4px; }
+
   /* PLAN BUILDER */
   .builder-palette { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
   .palette-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:7px 12px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; transition:background 0.15s; }
@@ -212,6 +237,7 @@
   <button onclick="showPage('squats')">Squat Programs</button>
   <button onclick="showPage('running')">Running</button>
   <button onclick="showPage('sessions')">Session Menu</button>
+  <button onclick="showPage('week')">Week Plan</button>
   <button onclick="showPage('references')">References</button>
   <button onclick="showPage('checklist')">Weekly Check</button>
 </nav>
@@ -844,6 +870,26 @@
 </div>
 
 
+<!-- ========== WEEK PLAN ========== -->
+<div id="page-week" class="page">
+  <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:4px;">
+    <div class="section-label" style="margin:0;">This Week</div>
+    <button onclick="clearWeekPlan()" style="background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; padding:0;">Clear all</button>
+  </div>
+  <div id="week-current-block" style="font-size:12px; color:var(--muted); margin-bottom:12px;"></div>
+  <div id="week-days"></div>
+</div>
+
+<!-- Session picker sheet -->
+<div id="session-picker-overlay" onclick="closeSessionPicker()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100;"></div>
+<div id="session-picker-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; max-height:70vh; background:var(--surface); border-radius:16px 16px 0 0; z-index:101; overflow:hidden; flex-direction:column;">
+  <div style="padding:12px 16px 8px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+    <div style="font-size:14px; font-weight:600;">Add to <span id="picker-day-label"></span></div>
+    <button onclick="closeSessionPicker()" style="background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; line-height:1; padding:0;">×</button>
+  </div>
+  <div style="overflow-y:auto; padding:8px 16px 24px;" id="picker-list"></div>
+</div>
+
 <!-- ========== REFERENCES ========== -->
 <div id="page-references" class="page">
   <div class="section-label">Why This Works</div>
@@ -1047,11 +1093,12 @@ function showPage(id) {
   document.querySelectorAll('.nav button').forEach((b, i) => {
     b.classList.remove('active');
   });
-  const pages = ['home','blocks','squats','running','sessions','references','checklist'];
+  const pages = ['home','blocks','squats','running','sessions','week','references','checklist'];
   const idx = pages.indexOf(id);
   if (idx >= 0) document.querySelectorAll('.nav button')[idx].classList.add('active');
   window.scrollTo(0, 0);
   localStorage.setItem('lastPage', id);
+  if (id === 'week') renderWeekPlan();
 }
 
 function showBlock(id) {
@@ -1169,6 +1216,146 @@ function resetChecklist() {
   document.getElementById('rpe-detail').style.display = 'none';
   localStorage.removeItem('checklistState');
   localStorage.removeItem('weekColour');
+}
+
+// --- Week Planner ---
+const DAYS = ['mon','tue','wed','thu','fri','sat','sun'];
+const DAY_LABELS = { mon:'Monday', tue:'Tuesday', wed:'Wednesday', thu:'Thursday', fri:'Friday', sat:'Saturday', sun:'Sunday' };
+const TYPE_DOTS = { run:'#4caf50', strength:'#c084fc', metcon:'#ffc107', recovery:'#47c8ff' };
+
+const BUILT_IN_SESSIONS = [
+  { id:'long-z2',       name:'Long Z2 Run',                type:'run',      desc:'45–80 min easy, conversational' },
+  { id:'short-z2',      name:'Short Z2 / Easy Jog',        type:'run',      desc:'20–30 min easy' },
+  { id:'short-intervals',name:'Short Intervals',           type:'run',      desc:'6–8×400 m @ ~5:10–5:20/km' },
+  { id:'mid-intervals', name:'Mid Intervals',              type:'run',      desc:'5–6×600–800 m @ ~5:00/km' },
+  { id:'race-pace',     name:'Race-Pace Repeats',          type:'run',      desc:'3–4×1 km @ target race pace' },
+  { id:'compromised-run',name:'Compromised Run',           type:'run',      desc:'500 m run + wall balls / lunges' },
+  { id:'tempo-run',     name:'Tempo Run',                  type:'run',      desc:'20–30 min @ threshold' },
+  { id:'rsp-session',   name:'RSP Session',                type:'strength', desc:'Back or front squat per spreadsheet' },
+  { id:'velocity-squat',name:'Velocity Squat Session',     type:'strength', desc:'5×5 @ 55–60% + 1×1 @ 80%' },
+  { id:'front-squat',   name:'Front Squat Priority',       type:'strength', desc:'Front squat + Oly accessories' },
+  { id:'gymnastics',    name:'Gymnastics Skill Block',     type:'strength', desc:'Pull-ups, MU drills, handstands' },
+  { id:'hyrox-strength',name:'HYROX Strength Day',         type:'strength', desc:'Squats, lunges, carries, wall balls' },
+  { id:'fbb-class',     name:'Functional Bodybuilding',    type:'strength', desc:'Gym-programmed hypertrophy' },
+  { id:'hyrox-class',   name:'HYROX Class',                type:'metcon',   desc:'Stations + running' },
+  { id:'crossfit-class',name:'CrossFit Class',             type:'metcon',   desc:'General metcon, variable stimulus' },
+  { id:'short-metcon',  name:'Short Sharp Metcon',         type:'metcon',   desc:'10–15 min AMRAP/EMOM' },
+  { id:'z2-finisher',   name:'Z2 Finisher',                type:'recovery', desc:'15–20 min easy bike or row' },
+  { id:'mobility',      name:'Mobility / Stretching',      type:'recovery', desc:'Hip flexors, thoracic, ankles' },
+];
+
+let weekPlan = { mon:[], tue:[], wed:[], thu:[], fri:[], sat:[], sun:[] };
+let pickerTargetDay = null;
+
+function getAllSessions() {
+  return [
+    ...BUILT_IN_SESSIONS,
+    ...customSessions.map(s => ({ id: 'custom-' + s.id, name: s.name, type: s.type, desc: s.desc || '' }))
+  ];
+}
+
+function renderWeekPlan() {
+  const container = document.getElementById('week-days');
+  container.innerHTML = '';
+
+  const today = new Date();
+  const todayName = ['sun','mon','tue','wed','thu','fri','sat'][today.getDay()];
+
+  // show current block as context
+  const cbIdx = parseInt(localStorage.getItem('currentBuilderIdx'));
+  const cbWeek = localStorage.getItem('currentWeek') || '';
+  const cbEl = document.getElementById('week-current-block');
+  if (!isNaN(cbIdx) && builderBlocks[cbIdx]) {
+    cbEl.textContent = BLOCK_DEFS[builderBlocks[cbIdx].type].name + (cbWeek ? ' · ' + cbWeek : '');
+  } else {
+    cbEl.textContent = '';
+  }
+
+  DAYS.forEach(day => {
+    const sessions = weekPlan[day] || [];
+    const isToday = day === todayName;
+    const div = document.createElement('div');
+    div.className = 'week-day';
+    const chipsHTML = sessions.map((s, i) => `
+      <div class="week-session-chip type-${s.type}">
+        <div>
+          <div class="chip-name">${s.name}</div>
+          <div class="chip-type">${s.type}</div>
+        </div>
+        <button class="chip-remove" onclick="removeFromDay('${day}', ${i})">×</button>
+      </div>`).join('');
+    div.innerHTML = `
+      <div class="week-day-header">
+        <span class="week-day-name${isToday ? ' today' : ''}">${DAY_LABELS[day]}${isToday ? ' · today' : ''}</span>
+        <button class="week-add-btn" onclick="openSessionPicker('${day}')">+ add</button>
+      </div>
+      <div class="week-sessions">${chipsHTML}</div>`;
+    container.appendChild(div);
+  });
+}
+
+function openSessionPicker(day) {
+  pickerTargetDay = day;
+  document.getElementById('picker-day-label').textContent = DAY_LABELS[day];
+  const list = document.getElementById('picker-list');
+  list.innerHTML = '';
+  const groups = { run:'🏃 Run', strength:'🏋️ Strength', metcon:'🔥 Metcon', recovery:'💤 Recovery' };
+  Object.entries(groups).forEach(([type, label]) => {
+    const sessions = getAllSessions().filter(s => s.type === type);
+    if (!sessions.length) return;
+    const groupLabel = document.createElement('div');
+    groupLabel.className = 'picker-group-label';
+    groupLabel.textContent = label;
+    list.appendChild(groupLabel);
+    sessions.forEach(s => {
+      const item = document.createElement('div');
+      item.className = 'picker-item';
+      item.innerHTML = `
+        <div class="picker-item-dot" style="background:${TYPE_DOTS[s.type]}"></div>
+        <div><div class="picker-item-name">${s.name}</div><div class="picker-item-desc">${s.desc}</div></div>`;
+      item.onclick = () => addToDay(day, s);
+      list.appendChild(item);
+    });
+  });
+  const overlay = document.getElementById('session-picker-overlay');
+  const sheet = document.getElementById('session-picker-sheet');
+  overlay.style.display = 'block';
+  sheet.style.display = 'flex';
+}
+
+function closeSessionPicker() {
+  document.getElementById('session-picker-overlay').style.display = 'none';
+  document.getElementById('session-picker-sheet').style.display = 'none';
+  pickerTargetDay = null;
+}
+
+function addToDay(day, session) {
+  weekPlan[day].push({ id: session.id, name: session.name, type: session.type });
+  saveWeekPlan();
+  renderWeekPlan();
+  closeSessionPicker();
+}
+
+function removeFromDay(day, idx) {
+  weekPlan[day].splice(idx, 1);
+  saveWeekPlan();
+  renderWeekPlan();
+}
+
+function clearWeekPlan() {
+  weekPlan = { mon:[], tue:[], wed:[], thu:[], fri:[], sat:[], sun:[] };
+  saveWeekPlan();
+  renderWeekPlan();
+}
+
+function saveWeekPlan() {
+  localStorage.setItem('weekPlan', JSON.stringify(weekPlan));
+}
+
+function restoreWeekPlan() {
+  const saved = localStorage.getItem('weekPlan');
+  if (saved) weekPlan = JSON.parse(saved);
+  renderWeekPlan();
 }
 
 // --- Plan Builder ---
@@ -1419,6 +1606,7 @@ restoreChecklist();
 restoreCustomSessions();
 restoreBuilderChain();
 restoreCurrentBlock();
+restoreWeekPlan();
 </script>
 
 </body>
