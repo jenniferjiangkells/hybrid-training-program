@@ -1176,10 +1176,12 @@ if (FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY') {
       const data = snapshot.val();
       if (!data) { syncDot('connected'); return; }
       remoteUpdate = true;
+      // Firebase converts arrays to objects with numeric keys — normalize back
+      const toArray = v => !v ? [] : Array.isArray(v) ? v : Object.values(v);
+
       if (data.builderBlocks !== undefined) {
-        builderBlocks = data.builderBlocks || [];
+        builderBlocks = toArray(data.builderBlocks);
         localStorage.setItem('builderChain', JSON.stringify(builderBlocks));
-        renderBuilderChain();
       }
       if (data.currentBuilderIdx !== undefined) {
         localStorage.setItem('currentBuilderIdx', data.currentBuilderIdx);
@@ -1192,7 +1194,9 @@ if (FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY') {
         renderBuilderChain();
       }
       if (data.weekPlan !== undefined) {
-        weekPlan = data.weekPlan || { mon:[], tue:[], wed:[], thu:[], fri:[], sat:[], sun:[] };
+        const raw = data.weekPlan || {};
+        const days = ['mon','tue','wed','thu','fri','sat','sun'];
+        days.forEach(d => { weekPlan[d] = toArray(raw[d]); });
         localStorage.setItem('weekPlan', JSON.stringify(weekPlan));
         renderDayStrip();
       }
@@ -1580,6 +1584,7 @@ function renderBuilderChain() {
     // Touch drag — long-press to activate (avoids hijacking scroll)
     let touchStartY = 0, touchItem = null, longPressTimer = null, touchDragActive = false;
     item.addEventListener('touchstart', e => {
+      if (e.target.closest('input, select, button, textarea')) return;
       touchStartY = e.touches[0].clientY;
       touchItem = item;
       longPressTimer = setTimeout(() => {
