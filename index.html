@@ -131,9 +131,18 @@
   .session-item .s-name { font-size: 14px; font-weight: 600; }
   .session-item .s-desc { font-size: 13px; color: var(--muted); margin-top: 3px; }
   .session-item .s-tags { margin-top: 8px; }
+  #session-search:focus { outline:none; border-color:var(--accent); }
+  #session-search::placeholder { color:var(--muted); }
+  .tag-cloud-row { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:4px; }
+  .tag-cloud-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:3px; margin-top:6px; }
+  .tag-cloud-row:first-of-type .tag-cloud-label { margin-top:0; }
+  .tc-tag { padding:4px 10px; border-radius:20px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-size:12px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+  .tc-tag:hover { border-color:var(--accent); color:var(--text); }
+  .tc-tag.active { background:var(--accent); border-color:var(--accent); color:#000; font-weight:600; }
+  .tag-cloud-clear { font-size:11px; color:var(--muted); background:none; border:none; cursor:pointer; padding:4px 0; }
+  .tag-cloud-clear:hover { color:var(--text); }
   .s-tags .tag { cursor:pointer; transition:opacity 0.15s; }
   .s-tags .tag:hover { opacity:0.75; }
-  .s-tags .tag.tag-active { outline:2px solid currentColor; outline-offset:1px; }
   .session-item.custom-session { border-color: var(--accent); border-opacity: 0.4; }
   .custom-session .s-delete { float:right; background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; line-height:1; padding:0; margin-left:8px; }
   .custom-session .s-delete:hover { color:var(--red); }
@@ -754,8 +763,10 @@
     <div id="week-selected-empty" style="font-size:12px; color:var(--muted); display:none;">Nothing planned — add sessions below</div>
   </div>
 
-  <div class="section-label">Filter by Type</div>
-  <div class="filter-row">
+  <input id="session-search" type="search" placeholder="Search sessions…" oninput="applyFilters()" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:9px 12px; border-radius:8px; font-size:13px; margin-bottom:10px; font-family:var(--font);">
+
+  <div class="section-label" style="margin-bottom:6px;">Filter by Type</div>
+  <div class="filter-row" style="margin-bottom:8px;">
     <button class="filter-btn active" data-type="all" onclick="filterSessions('all', this)">All</button>
     <button class="filter-btn" data-type="run" onclick="filterSessions('run', this)">🏃 Run</button>
     <button class="filter-btn" data-type="strength" onclick="filterSessions('strength', this)">🏋️ Strength</button>
@@ -763,135 +774,138 @@
     <button class="filter-btn" data-type="recovery" onclick="filterSessions('recovery', this)">💤 Recovery</button>
     <button class="filter-btn" data-type="custom" onclick="filterSessions('custom', this)">⭐ Custom</button>
   </div>
-  <div id="tag-filter-bar" style="display:none; align-items:center; gap:6px; padding:6px 0 2px;">
-    <span style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;">Tag</span>
-    <span id="tag-filter-label" class="tag grey" style="font-size:12px;"></span>
-    <button onclick="clearTagFilter()" style="background:none; border:none; color:var(--muted); font-size:13px; cursor:pointer; padding:0; line-height:1;">× clear</button>
-  </div>
+  <div id="tag-cloud" style="margin-bottom:10px;"></div>
 
   <div id="add-session-form" class="card" style="margin-bottom:12px;">
     <div class="card-title">Add Custom Session</div>
     <input id="cs-name" type="text" placeholder="Session name (e.g. Pull-Up Sets)" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; margin-bottom:8px;">
     <input id="cs-desc" type="text" placeholder="Description (optional)" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; margin-bottom:8px;">
-    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-      <select id="cs-type" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; flex:1; min-width:120px;">
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+      <select id="cs-type" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; flex:1;">
         <option value="strength">🏋️ Strength</option>
         <option value="run">🏃 Run</option>
         <option value="metcon">🔥 Metcon</option>
         <option value="recovery">💤 Recovery</option>
       </select>
-      <input id="cs-tags" type="text" placeholder="Tags, comma separated" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; flex:2; min-width:140px;">
-      <button onclick="addCustomSession()" style="background:var(--accent); color:#000; border:none; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;">+ Add</button>
     </div>
+    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:5px;">Tags</div>
+    <div id="cs-tag-picker" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;"></div>
+    <button onclick="addCustomSession()" style="background:var(--accent); color:#000; border:none; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">+ Add</button>
   </div>
 
   <div id="session-list">
-    <div class="session-item" data-type="run" data-id="long-z2">
+    <div class="session-item" data-type="run" data-id="long-z2" data-tags="All blocks|Non-negotiable">
       <div class="s-name">Long Z2 Run</div>
       <div class="s-desc">45–80 min easy, fully conversational. Core aerobic builder.</div>
-      <div class="s-tags tags"><span class="tag green">All blocks</span><span class="tag grey">Non-negotiable</span></div>
+      <div class="s-tags tags"><span class="tag grey">All blocks</span><span class="tag grey">Non-negotiable</span></div>
       <button class="session-add-btn" data-sid="long-z2" data-sname="Long Z2 Run" data-stype="run"></button>
     </div>
-    <div class="session-item" data-type="run" data-id="short-z2">
+    <div class="session-item" data-type="run" data-id="short-z2" data-tags="All blocks|Recovery">
       <div class="s-name">Short Z2 / Easy Jog</div>
       <div class="s-desc">20–30 min easy. Active recovery or interval substitute in Oly block.</div>
-      <div class="s-tags tags"><span class="tag green">All blocks</span><span class="tag grey">Recovery</span></div>
+      <div class="s-tags tags"><span class="tag grey">All blocks</span><span class="tag grey">Recovery</span></div>
       <button class="session-add-btn" data-sid="short-z2" data-sname="Short Z2 / Easy Jog" data-stype="run"></button>
     </div>
-    <div class="session-item" data-type="run" data-id="short-intervals">
+    <div class="session-item" data-type="run" data-id="short-intervals" data-tags="Block B|Base">
       <div class="s-name">Short Intervals</div>
       <div class="s-desc">6–8×400 m @ ~5:10–5:20/km · 90 s jog recovery. Intro to speed.</div>
-      <div class="s-tags tags"><span class="tag blue">Block B base</span></div>
+      <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag grey">Base</span></div>
       <button class="session-add-btn" data-sid="short-intervals" data-sname="Short Intervals" data-stype="run"></button>
     </div>
-    <div class="session-item" data-type="run" data-id="mid-intervals">
+    <div class="session-item" data-type="run" data-id="mid-intervals" data-tags="Block B|Build">
       <div class="s-name">Mid Intervals</div>
       <div class="s-desc">5–6×600–800 m @ ~5:00/km · 2 min jog. Speed reserve building.</div>
-      <div class="s-tags tags"><span class="tag blue">Block B build</span></div>
+      <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag blue">Build</span></div>
       <button class="session-add-btn" data-sid="mid-intervals" data-sname="Mid Intervals" data-stype="run"></button>
     </div>
-    <div class="session-item" data-type="run" data-id="race-pace">
+    <div class="session-item" data-type="run" data-id="race-pace" data-tags="Block B|Peak">
       <div class="s-name">Race-Pace Repeats</div>
       <div class="s-desc">3–4×1 km @ target HYROX race pace · 3 min jog. Lock in the pace.</div>
-      <div class="s-tags tags"><span class="tag green">Block B peak</span></div>
+      <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag green">Peak</span></div>
       <button class="session-add-btn" data-sid="race-pace" data-sname="Race-Pace Repeats" data-stype="run"></button>
     </div>
-    <div class="session-item" data-type="run" data-id="compromised-run">
+    <div class="session-item" data-type="run" data-id="compromised-run" data-tags="Block B|Specific">
       <div class="s-name">Compromised Run</div>
       <div class="s-desc">3–4 rounds: 500 m run + 20 wall balls or 40 m lunge · walk 2–3 min.</div>
-      <div class="s-tags tags"><span class="tag orange">Block B specific</span><span class="tag grey">Every 2–3 weeks</span></div>
+      <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag orange">Specific</span></div>
       <button class="session-add-btn" data-sid="compromised-run" data-sname="Compromised Run" data-stype="run"></button>
     </div>
-    <div class="session-item" data-type="run" data-id="tempo-run">
+    <div class="session-item" data-type="run" data-id="tempo-run" data-tags="Block C|Base">
       <div class="s-name">Tempo Run</div>
       <div class="s-desc">20–30 min continuous @ comfortably hard (threshold). General fitness base.</div>
-      <div class="s-tags tags"><span class="tag blue">Block C</span></div>
+      <div class="s-tags tags"><span class="tag blue">Block C</span><span class="tag grey">Base</span></div>
       <button class="session-add-btn" data-sid="tempo-run" data-sname="Tempo Run" data-stype="run"></button>
     </div>
-    <div class="session-item" data-type="strength" data-id="rsp-session">
+    <div class="session-item" data-type="strength" data-id="rsp-session" data-tags="Block A|Block C">
       <div class="s-name">RSP Session</div>
       <div class="s-desc">Per RSP spreadsheet — back or front squat. High CNS demand.</div>
-      <div class="s-tags tags"><span class="tag purple">Block A (2×/wk)</span><span class="tag blue">Block C (2–3×/wk)</span></div>
+      <div class="s-tags tags"><span class="tag purple">Block A</span><span class="tag blue">Block C</span></div>
       <button class="session-add-btn" data-sid="rsp-session" data-sname="RSP Session" data-stype="strength"></button>
     </div>
-    <div class="session-item" data-type="strength" data-id="velocity-squat">
+    <div class="session-item" data-type="strength" data-id="velocity-squat" data-tags="Block B|Block C|Maintenance">
       <div class="s-name">Velocity Squat Session</div>
       <div class="s-desc">5×5 @ 55–60% 1RM fast · 1×1 @ 80% · weekly RM ladder test.</div>
-      <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag blue">Block C maintenance</span></div>
+      <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag blue">Block C</span><span class="tag grey">Maintenance</span></div>
       <button class="session-add-btn" data-sid="velocity-squat" data-sname="Velocity Squat Session" data-stype="strength"></button>
     </div>
-    <div class="session-item" data-type="strength" data-id="front-squat">
+    <div class="session-item" data-type="strength" data-id="front-squat" data-tags="Block A">
       <div class="s-name">Front Squat Priority</div>
       <div class="s-desc">Front squat main lift + Oly accessories (pulls, pause squats, footwork).</div>
       <div class="s-tags tags"><span class="tag purple">Block A</span></div>
       <button class="session-add-btn" data-sid="front-squat" data-sname="Front Squat Priority" data-stype="strength"></button>
     </div>
-    <div class="session-item" data-type="strength" data-id="gymnastics">
+    <div class="session-item" data-type="strength" data-id="oly-lifting" data-tags="Block A">
+      <div class="s-name">Olympic Lifting Session</div>
+      <div class="s-desc">Drop into a class or follow programming block.</div>
+      <div class="s-tags tags"><span class="tag purple">Block A</span></div>
+      <button class="session-add-btn" data-sid="oly-lifting" data-sname="Olympic Lifting Session" data-stype="strength"></button>
+    </div>
+    <div class="session-item" data-type="strength" data-id="gymnastics" data-tags="Block C|Skill">
       <div class="s-name">Gymnastics Skill Block</div>
       <div class="s-desc">10–15 min fresh: pull-ups, push-ups, bar muscle-up drills, handstands, toes-to-bar. Do before squats.</div>
-      <div class="s-tags tags"><span class="tag blue">Block C</span><span class="tag grey">Skill-first</span></div>
+      <div class="s-tags tags"><span class="tag blue">Block C</span><span class="tag purple">Skill</span></div>
       <button class="session-add-btn" data-sid="gymnastics" data-sname="Gymnastics Skill Block" data-stype="strength"></button>
     </div>
-    <div class="session-item" data-type="strength" data-id="hyrox-strength">
+    <div class="session-item" data-type="strength" data-id="hyrox-strength" data-tags="Block B|Specific">
       <div class="s-name">HYROX Strength Day</div>
       <div class="s-desc">Squats + walking lunges + heavy carries + wall balls. Power endurance.</div>
-      <div class="s-tags tags"><span class="tag green">Block B</span></div>
+      <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag orange">Specific</span></div>
       <button class="session-add-btn" data-sid="hyrox-strength" data-sname="HYROX Strength Day" data-stype="strength"></button>
     </div>
-    <div class="session-item" data-type="strength" data-id="fbb-class">
+    <div class="session-item" data-type="strength" data-id="fbb-class" data-tags="Block C|Block D">
       <div class="s-name">Functional Bodybuilding Class</div>
       <div class="s-desc">Gym-programmed hypertrophy / push-pull. Structural balance work.</div>
       <div class="s-tags tags"><span class="tag blue">Block C</span><span class="tag grey">Block D</span></div>
       <button class="session-add-btn" data-sid="fbb-class" data-sname="Functional Bodybuilding Class" data-stype="strength"></button>
     </div>
-    <div class="session-item" data-type="metcon" data-id="hyrox-class">
+    <div class="session-item" data-type="metcon" data-id="hyrox-class" data-tags="Block B">
       <div class="s-name">HYROX Class</div>
       <div class="s-desc">Stations + running. Progresses from technique → pace discipline → race sim.</div>
-      <div class="s-tags tags"><span class="tag green">Block B primary</span></div>
+      <div class="s-tags tags"><span class="tag green">Block B</span></div>
       <button class="session-add-btn" data-sid="hyrox-class" data-sname="HYROX Class" data-stype="metcon"></button>
     </div>
-    <div class="session-item" data-type="metcon" data-id="crossfit-class">
+    <div class="session-item" data-type="metcon" data-id="crossfit-class" data-tags="All blocks">
       <div class="s-name">CrossFit Class</div>
       <div class="s-desc">General metcon, variable stimulus. Good for all blocks as conditioning filler.</div>
-      <div class="s-tags tags"><span class="tag green">All blocks</span></div>
+      <div class="s-tags tags"><span class="tag grey">All blocks</span></div>
       <button class="session-add-btn" data-sid="crossfit-class" data-sname="CrossFit Class" data-stype="metcon"></button>
     </div>
-    <div class="session-item" data-type="metcon" data-id="short-metcon">
+    <div class="session-item" data-type="metcon" data-id="short-metcon" data-tags="Block A|Low leg stress">
       <div class="s-name">Short Sharp Metcon</div>
       <div class="s-desc">10–15 min AMRAP/EMOM, upper-body bias or mixed. CNS-sparing.</div>
       <div class="s-tags tags"><span class="tag purple">Block A</span><span class="tag grey">Low leg stress</span></div>
       <button class="session-add-btn" data-sid="short-metcon" data-sname="Short Sharp Metcon" data-stype="metcon"></button>
     </div>
-    <div class="session-item" data-type="recovery" data-id="z2-finisher">
+    <div class="session-item" data-type="recovery" data-id="z2-finisher" data-tags="All blocks|Post-strength">
       <div class="s-name">Z2 Finisher</div>
       <div class="s-desc">15–20 min easy bike or row after strength session. Active recovery.</div>
-      <div class="s-tags tags"><span class="tag green">Any block</span><span class="tag grey">Post-strength</span></div>
+      <div class="s-tags tags"><span class="tag grey">All blocks</span><span class="tag grey">Post-strength</span></div>
       <button class="session-add-btn" data-sid="z2-finisher" data-sname="Z2 Finisher" data-stype="recovery"></button>
     </div>
-    <div class="session-item" data-type="recovery" data-id="mobility">
+    <div class="session-item" data-type="recovery" data-id="mobility" data-tags="Block D|Recovery|Red weeks">
       <div class="s-name">Mobility / Stretching</div>
       <div class="s-desc">Hip flexors, thoracic spine, ankles. 15–20 min. Especially post-race or red weeks.</div>
-      <div class="s-tags tags"><span class="tag grey">Block D</span><span class="tag grey">Red weeks</span></div>
+      <div class="s-tags tags"><span class="tag grey">Block D</span><span class="tag grey">Recovery</span><span class="tag grey">Red weeks</span></div>
       <button class="session-add-btn" data-sid="mobility" data-sname="Mobility / Stretching" data-stype="recovery"></button>
     </div>
     <div id="custom-sessions"></div>
@@ -1108,7 +1122,7 @@ function showPage(id) {
   if (idx >= 0) document.querySelectorAll('.nav button')[idx].classList.add('active');
   window.scrollTo(0, 0);
   localStorage.setItem('lastPage', id);
-  if (id === 'sessions') renderDayStrip();
+  if (id === 'sessions') { renderDayStrip(); renderTagCloud(); renderCsTagPicker(); }
 }
 
 function showBlock(id) {
@@ -1128,7 +1142,58 @@ function toggleAcc(header) {
   body.classList.toggle('open');
 }
 
-let activeTagFilter = null;
+const TAG_GROUPS = [
+  { label: 'Block',  tags: ['Block A', 'Block B', 'Block C', 'Block D', 'All blocks'] },
+  { label: 'Phase',  tags: ['Base', 'Build', 'Peak', 'Maintenance', 'Specific'] },
+  { label: 'Other',  tags: ['Non-negotiable', 'Recovery', 'Skill', 'Low leg stress', 'Post-strength', 'Red weeks'] },
+];
+
+let activeTagFilters = new Set();
+
+function renderTagCloud() {
+  const cloud = document.getElementById('tag-cloud');
+  if (!cloud) return;
+  cloud.innerHTML = '';
+  TAG_GROUPS.forEach(group => {
+    const label = document.createElement('div');
+    label.className = 'tag-cloud-label';
+    label.textContent = group.label;
+    cloud.appendChild(label);
+    const row = document.createElement('div');
+    row.className = 'tag-cloud-row';
+    group.tags.forEach(tag => {
+      const btn = document.createElement('button');
+      btn.className = 'tc-tag' + (activeTagFilters.has(tag) ? ' active' : '');
+      btn.textContent = tag;
+      btn.onclick = () => toggleTagFilter(tag);
+      row.appendChild(btn);
+    });
+    cloud.appendChild(row);
+  });
+  if (activeTagFilters.size > 0) {
+    const clear = document.createElement('button');
+    clear.className = 'tag-cloud-clear';
+    clear.textContent = `× clear ${activeTagFilters.size} tag${activeTagFilters.size > 1 ? 's' : ''}`;
+    clear.onclick = clearTagFilters;
+    cloud.appendChild(clear);
+  }
+}
+
+function toggleTagFilter(tag) {
+  if (activeTagFilters.has(tag)) activeTagFilters.delete(tag);
+  else activeTagFilters.add(tag);
+  renderTagCloud();
+  applyFilters();
+}
+
+function clearTagFilters() {
+  activeTagFilters.clear();
+  renderTagCloud();
+  applyFilters();
+}
+
+// keep old name working for s-tags click delegation
+function filterByTag(tag) { toggleTagFilter(tag); }
 
 function filterSessions(type, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -1136,39 +1201,17 @@ function filterSessions(type, btn) {
   applyFilters();
 }
 
-function filterByTag(tag) {
-  activeTagFilter = (activeTagFilter === tag) ? null : tag;
-  updateTagFilterBar();
-  applyFilters();
-}
-
-function clearTagFilter() {
-  activeTagFilter = null;
-  updateTagFilterBar();
-  applyFilters();
-}
-
-function updateTagFilterBar() {
-  const bar = document.getElementById('tag-filter-bar');
-  const label = document.getElementById('tag-filter-label');
-  if (activeTagFilter) {
-    bar.style.display = 'flex';
-    label.textContent = activeTagFilter;
-  } else {
-    bar.style.display = 'none';
-  }
-  // highlight matching tags in list
-  document.querySelectorAll('.s-tags .tag').forEach(t => {
-    t.classList.toggle('tag-active', t.textContent.trim() === activeTagFilter);
-  });
-}
-
 function applyFilters() {
   const activeType = document.querySelector('.filter-btn.active')?.dataset?.type || 'all';
+  const query = (document.getElementById('session-search')?.value || '').toLowerCase();
   document.querySelectorAll('.session-item:not(.custom-session)').forEach(item => {
     const typeMatch = activeType === 'all' || activeType === 'custom' || item.dataset.type === activeType;
-    const tagMatch = !activeTagFilter || [...item.querySelectorAll('.s-tags .tag')].some(t => t.textContent.trim() === activeTagFilter);
-    item.style.display = (typeMatch && tagMatch) ? 'block' : 'none';
+    const itemTags = (item.dataset.tags || '').split('|');
+    const tagMatch = activeTagFilters.size === 0 || [...activeTagFilters].every(t => itemTags.includes(t));
+    const name = item.querySelector('.s-name')?.textContent.toLowerCase() || '';
+    const desc = item.querySelector('.s-desc')?.textContent.toLowerCase() || '';
+    const searchMatch = !query || name.includes(query) || desc.includes(query);
+    item.style.display = (typeMatch && tagMatch && searchMatch) ? 'block' : 'none';
   });
   renderCustomSessions();
 }
@@ -1502,19 +1545,40 @@ let customSessions = [];
 
 const TAG_COLOUR = { run:'green', strength:'blue', metcon:'orange', recovery:'grey', custom:'grey' };
 
+let csSelectedTags = new Set();
+
+function renderCsTagPicker() {
+  const picker = document.getElementById('cs-tag-picker');
+  if (!picker) return;
+  picker.innerHTML = '';
+  TAG_GROUPS.forEach(group => {
+    group.tags.forEach(tag => {
+      const btn = document.createElement('button');
+      btn.className = 'tc-tag' + (csSelectedTags.has(tag) ? ' active' : '');
+      btn.textContent = tag;
+      btn.onclick = () => {
+        if (csSelectedTags.has(tag)) csSelectedTags.delete(tag);
+        else csSelectedTags.add(tag);
+        renderCsTagPicker();
+      };
+      picker.appendChild(btn);
+    });
+  });
+}
+
 function addCustomSession() {
   const name = document.getElementById('cs-name').value.trim();
   if (!name) return;
   const desc = document.getElementById('cs-desc').value.trim();
   const type = document.getElementById('cs-type').value;
-  const tagsRaw = document.getElementById('cs-tags').value.trim();
-  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+  const tags = [...csSelectedTags];
   customSessions.push({ id: Date.now(), name, desc, type, tags });
   saveCustomSessions();
   renderCustomSessions();
   document.getElementById('cs-name').value = '';
   document.getElementById('cs-desc').value = '';
-  document.getElementById('cs-tags').value = '';
+  csSelectedTags.clear();
+  renderCsTagPicker();
 }
 
 function deleteCustomSession(id) {
@@ -1527,10 +1591,12 @@ function renderCustomSessions() {
   const container = document.getElementById('custom-sessions');
   container.innerHTML = '';
   const activeType = document.querySelector('.filter-btn.active')?.dataset?.type || 'all';
+  const query = (document.getElementById('session-search')?.value || '').toLowerCase();
   customSessions.forEach(s => {
     const typeMatch = activeType === 'all' || activeType === 'custom' || s.type === activeType;
-    const tagMatch = !activeTagFilter || s.tags.some(t => t === activeTagFilter);
-    if (!typeMatch || !tagMatch) return;
+    const tagMatch = activeTagFilters.size === 0 || [...activeTagFilters].every(t => s.tags.includes(t));
+    const searchMatch = !query || s.name.toLowerCase().includes(query) || (s.desc || '').toLowerCase().includes(query);
+    if (!typeMatch || !tagMatch || !searchMatch) return;
     const tagHTML = s.tags.map(t => `<span class="tag grey s-tags" style="cursor:pointer;" onclick="filterByTag('${t.replace(/'/g,"\\\'")}')">${t}</span>`).join('');
     const addLabel = selectedDay ? `+ ${DAY_LABELS[selectedDay]}` : '+ add to day';
     const div = document.createElement('div');
@@ -1575,6 +1641,8 @@ const lastPage = localStorage.getItem('lastPage');
 if (lastPage) showPage(lastPage);
 restoreChecklist();
 restoreCustomSessions();
+renderTagCloud();
+renderCsTagPicker();
 restoreBuilderChain();
 restoreCurrentBlock();
 restoreWeekPlan();
