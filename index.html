@@ -131,6 +131,7 @@
   .session-item .s-name { font-size: 14px; font-weight: 600; }
   .session-item .s-desc { font-size: 13px; color: var(--muted); margin-top: 3px; }
   .session-item .s-tags { margin-top: 8px; }
+  .session-note { display:block; width:100%; margin-top:8px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:12px; font-family:var(--font); padding:7px 9px; resize:vertical; min-height:40px; line-height:1.5; }
 
   /* DIVIDER */
   .divider { height: 1px; background: var(--border); margin: 16px 0; }
@@ -218,6 +219,29 @@
     </div>
     <div style="margin-top:12px; font-size:13px; color:var(--muted); line-height:1.6;">
       <strong style="color:var(--text)">2 runs + 1 squat + 1 metcon</strong> is your baseline. It's maintainable across every block without accumulating fatigue. Everything else is optional volume added when recovery is good.
+    </div>
+  </div>
+
+  <div class="section-label">Where You Are</div>
+  <div class="card" id="current-block-card">
+    <div class="card-title">Current Block & Week</div>
+    <div id="current-block-display" style="font-size:15px; font-weight:600; margin-bottom:10px; min-height:22px;"></div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <select id="block-select" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:8px; font-size:13px;">
+        <option value="">— Pick a block —</option>
+        <option value="Block A — Oly Focus">Block A — Oly Focus</option>
+        <option value="Block B — HYROX Prep">Block B — HYROX Prep</option>
+        <option value="Block C — Strength Base">Block C — Strength Base</option>
+        <option value="Block D — Deload">Block D — Deload</option>
+      </select>
+      <select id="week-select" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:8px; font-size:13px;">
+        <option value="">— Week —</option>
+        <option>Week 1</option><option>Week 2</option><option>Week 3</option>
+        <option>Week 4</option><option>Week 5</option><option>Week 6</option>
+        <option>Week 7</option><option>Week 8</option><option>Week 9</option>
+        <option>Week 10</option><option>Week 11</option><option>Week 12</option>
+      </select>
+      <button onclick="saveCurrentBlock()" style="background:var(--accent); color:#000; border:none; padding:6px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">Save</button>
     </div>
   </div>
 
@@ -551,6 +575,26 @@
     <div class="row"><span class="key">RM testing</span><span class="val">Weekly ladder (10RM → 8RM → ... → 1RM) gives clear progress signal</span></div>
   </div>
 
+  <div class="section-label">1RM Calculator</div>
+  <div class="card">
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+      <input id="orm-weight" type="number" placeholder="Weight (kg)" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; width:130px;">
+      <input id="orm-reps" type="number" placeholder="Reps" min="1" max="20" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; width:80px;">
+      <button onclick="calcORM()" style="background:var(--accent); color:#000; border:none; padding:8px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">Calculate</button>
+    </div>
+    <div id="orm-result" style="display:none;">
+      <div style="font-size:22px; font-weight:700; margin-bottom:8px;">Est. 1RM: <span id="orm-1rm" style="color:var(--accent)"></span> kg</div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px;">
+        <div class="prog-stat"><div class="stat-label">90%</div><div class="stat-val" id="orm-90"></div></div>
+        <div class="prog-stat"><div class="stat-label">80%</div><div class="stat-val" id="orm-80"></div></div>
+        <div class="prog-stat"><div class="stat-label">70%</div><div class="stat-val" id="orm-70"></div></div>
+        <div class="prog-stat"><div class="stat-label">60%</div><div class="stat-val" id="orm-60"></div></div>
+        <div class="prog-stat"><div class="stat-label">55%</div><div class="stat-val" id="orm-55"></div></div>
+        <div class="prog-stat"><div class="stat-label">50%</div><div class="stat-val" id="orm-50"></div></div>
+      </div>
+    </div>
+  </div>
+
   <div class="section-label">Pairing Matrix</div>
   <div class="card">
     <div class="row"><span class="key" style="width:auto; flex:1">Program</span><span class="val" style="width:80px; flex:none; text-align:center">Block B</span><span class="val" style="width:80px; flex:none; text-align:center">Block A</span><span class="val" style="width:80px; flex:none; text-align:center">Block C</span></div>
@@ -658,95 +702,113 @@
   </div>
 
   <div id="session-list">
-    <div class="session-item" data-type="run">
+    <div class="session-item" data-type="run" data-id="long-z2">
       <div class="s-name">Long Z2 Run</div>
       <div class="s-desc">45–80 min easy, fully conversational. Core aerobic builder.</div>
       <div class="s-tags tags"><span class="tag green">All blocks</span><span class="tag grey">Non-negotiable</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('long-z2', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="run">
+    <div class="session-item" data-type="run" data-id="short-z2">
       <div class="s-name">Short Z2 / Easy Jog</div>
       <div class="s-desc">20–30 min easy. Active recovery or interval substitute in Oly block.</div>
       <div class="s-tags tags"><span class="tag green">All blocks</span><span class="tag grey">Recovery</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('short-z2', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="run">
+    <div class="session-item" data-type="run" data-id="short-intervals">
       <div class="s-name">Short Intervals</div>
       <div class="s-desc">6–8×400 m @ ~5:10–5:20/km · 90 s jog recovery. Intro to speed.</div>
       <div class="s-tags tags"><span class="tag blue">Block B base</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('short-intervals', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="run">
+    <div class="session-item" data-type="run" data-id="mid-intervals">
       <div class="s-name">Mid Intervals</div>
       <div class="s-desc">5–6×600–800 m @ ~5:00/km · 2 min jog. Speed reserve building.</div>
       <div class="s-tags tags"><span class="tag blue">Block B build</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('mid-intervals', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="run">
+    <div class="session-item" data-type="run" data-id="race-pace">
       <div class="s-name">Race-Pace Repeats</div>
       <div class="s-desc">3–4×1 km @ target HYROX race pace · 3 min jog. Lock in the pace.</div>
       <div class="s-tags tags"><span class="tag green">Block B peak</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('race-pace', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="run">
+    <div class="session-item" data-type="run" data-id="compromised-run">
       <div class="s-name">Compromised Run</div>
       <div class="s-desc">3–4 rounds: 500 m run + 20 wall balls or 40 m lunge · walk 2–3 min.</div>
       <div class="s-tags tags"><span class="tag orange">Block B specific</span><span class="tag grey">Every 2–3 weeks</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('compromised-run', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="run">
+    <div class="session-item" data-type="run" data-id="tempo-run">
       <div class="s-name">Tempo Run</div>
       <div class="s-desc">20–30 min continuous @ comfortably hard (threshold). General fitness base.</div>
       <div class="s-tags tags"><span class="tag blue">Block C</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('tempo-run', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="strength">
+    <div class="session-item" data-type="strength" data-id="rsp-session">
       <div class="s-name">RSP Session</div>
       <div class="s-desc">Per RSP spreadsheet — back or front squat. High CNS demand.</div>
       <div class="s-tags tags"><span class="tag purple">Block A (2×/wk)</span><span class="tag blue">Block C (2–3×/wk)</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('rsp-session', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="strength">
+    <div class="session-item" data-type="strength" data-id="velocity-squat">
       <div class="s-name">Velocity Squat Session</div>
       <div class="s-desc">5×5 @ 55–60% 1RM fast · 1×1 @ 80% · weekly RM ladder test.</div>
       <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag blue">Block C maintenance</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('velocity-squat', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="strength">
+    <div class="session-item" data-type="strength" data-id="front-squat">
       <div class="s-name">Front Squat Priority</div>
       <div class="s-desc">Front squat main lift + Oly accessories (pulls, pause squats, footwork).</div>
       <div class="s-tags tags"><span class="tag purple">Block A</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('front-squat', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="strength">
+    <div class="session-item" data-type="strength" data-id="gymnastics">
       <div class="s-name">Gymnastics Skill Block</div>
       <div class="s-desc">10–15 min fresh: pull-ups, push-ups, bar muscle-up drills, handstands, toes-to-bar. Do before squats.</div>
       <div class="s-tags tags"><span class="tag blue">Block C</span><span class="tag grey">Skill-first</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('gymnastics', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="strength">
+    <div class="session-item" data-type="strength" data-id="hyrox-strength">
       <div class="s-name">HYROX Strength Day</div>
       <div class="s-desc">Squats + walking lunges + heavy carries + wall balls. Power endurance.</div>
       <div class="s-tags tags"><span class="tag green">Block B</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('hyrox-strength', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="strength">
+    <div class="session-item" data-type="strength" data-id="fbb-class">
       <div class="s-name">Functional Bodybuilding Class</div>
       <div class="s-desc">Gym-programmed hypertrophy / push-pull. Structural balance work.</div>
       <div class="s-tags tags"><span class="tag blue">Block C</span><span class="tag grey">Block D</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('fbb-class', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="metcon">
+    <div class="session-item" data-type="metcon" data-id="hyrox-class">
       <div class="s-name">HYROX Class</div>
       <div class="s-desc">Stations + running. Progresses from technique → pace discipline → race sim.</div>
       <div class="s-tags tags"><span class="tag green">Block B primary</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('hyrox-class', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="metcon">
+    <div class="session-item" data-type="metcon" data-id="crossfit-class">
       <div class="s-name">CrossFit Class</div>
       <div class="s-desc">General metcon, variable stimulus. Good for all blocks as conditioning filler.</div>
       <div class="s-tags tags"><span class="tag green">All blocks</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('crossfit-class', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="metcon">
+    <div class="session-item" data-type="metcon" data-id="short-metcon">
       <div class="s-name">Short Sharp Metcon</div>
       <div class="s-desc">10–15 min AMRAP/EMOM, upper-body bias or mixed. CNS-sparing.</div>
       <div class="s-tags tags"><span class="tag purple">Block A</span><span class="tag grey">Low leg stress</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('short-metcon', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="recovery">
+    <div class="session-item" data-type="recovery" data-id="z2-finisher">
       <div class="s-name">Z2 Finisher</div>
       <div class="s-desc">15–20 min easy bike or row after strength session. Active recovery.</div>
       <div class="s-tags tags"><span class="tag green">Any block</span><span class="tag grey">Post-strength</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('z2-finisher', this.value)"></textarea>
     </div>
-    <div class="session-item" data-type="recovery">
+    <div class="session-item" data-type="recovery" data-id="mobility">
       <div class="s-name">Mobility / Stretching</div>
       <div class="s-desc">Hip flexors, thoracic spine, ankles. 15–20 min. Especially post-race or red weeks.</div>
       <div class="s-tags tags"><span class="tag grey">Block D</span><span class="tag grey">Red weeks</span></div>
+      <textarea class="session-note" placeholder="Notes..." oninput="saveNote('mobility', this.value)"></textarea>
     </div>
   </div>
 </div>
@@ -1036,10 +1098,66 @@ function resetChecklist() {
   localStorage.removeItem('weekColour');
 }
 
+// --- Current block indicator ---
+function saveCurrentBlock() {
+  const block = document.getElementById('block-select').value;
+  const week = document.getElementById('week-select').value;
+  if (!block || !week) return;
+  localStorage.setItem('currentBlock', block);
+  localStorage.setItem('currentWeek', week);
+  updateBlockDisplay(block, week);
+}
+
+function updateBlockDisplay(block, week) {
+  const el = document.getElementById('current-block-display');
+  if (block && week) el.textContent = block + ' · ' + week;
+}
+
+function restoreCurrentBlock() {
+  const block = localStorage.getItem('currentBlock');
+  const week = localStorage.getItem('currentWeek');
+  if (block) document.getElementById('block-select').value = block;
+  if (week) document.getElementById('week-select').value = week;
+  if (block && week) updateBlockDisplay(block, week);
+}
+
+// --- Session notes ---
+function saveNote(id, value) {
+  const notes = JSON.parse(localStorage.getItem('sessionNotes') || '{}');
+  notes[id] = value;
+  localStorage.setItem('sessionNotes', JSON.stringify(notes));
+}
+
+function restoreNotes() {
+  const notes = JSON.parse(localStorage.getItem('sessionNotes') || '{}');
+  document.querySelectorAll('.session-item[data-id]').forEach(item => {
+    const id = item.dataset.id;
+    if (notes[id]) item.querySelector('.session-note').value = notes[id];
+  });
+}
+
+// --- 1RM calculator (Epley formula) ---
+function calcORM() {
+  const w = parseFloat(document.getElementById('orm-weight').value);
+  const r = parseInt(document.getElementById('orm-reps').value);
+  if (!w || !r || r < 1) return;
+  const orm = r === 1 ? w : Math.round(w * (1 + r / 30));
+  document.getElementById('orm-1rm').textContent = orm;
+  document.getElementById('orm-90').textContent = Math.round(orm * 0.9) + ' kg';
+  document.getElementById('orm-80').textContent = Math.round(orm * 0.8) + ' kg';
+  document.getElementById('orm-70').textContent = Math.round(orm * 0.7) + ' kg';
+  document.getElementById('orm-60').textContent = Math.round(orm * 0.6) + ' kg';
+  document.getElementById('orm-55').textContent = Math.round(orm * 0.55) + ' kg';
+  document.getElementById('orm-50').textContent = Math.round(orm * 0.5) + ' kg';
+  document.getElementById('orm-result').style.display = 'block';
+}
+
 // Restore state on load
 const lastPage = localStorage.getItem('lastPage');
 if (lastPage) showPage(lastPage);
 restoreChecklist();
+restoreCurrentBlock();
+restoreNotes();
 </script>
 
 </body>
