@@ -168,6 +168,9 @@
   .builder-item .b-delete { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:0 4px; align-self:flex-start; margin-top:2px; line-height:1; }
   .builder-item .b-delete:hover { color:var(--red); }
   .builder-drag-handle { color:var(--muted); font-size:14px; align-self:flex-start; margin-top:5px; cursor:grab; user-select:none; padding-right:2px; }
+  .builder-item.builder-current .b-name { color:var(--accent); }
+  .b-set-current { background:none; border:none; color:var(--muted); font-size:11px; cursor:pointer; padding:3px 0 0; display:block; }
+  .b-set-current:hover { color:var(--accent); }
 
   /* SQUAT PROGRAMS */
   .prog-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; }
@@ -244,32 +247,9 @@
     </div>
   </div>
 
-  <div class="section-label">Where You Are</div>
-  <div class="card" id="current-block-card">
-    <div class="card-title">Current Block & Week</div>
-    <div id="current-block-display" style="font-size:15px; font-weight:600; margin-bottom:10px; min-height:22px;"></div>
-    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-      <select id="block-select" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:8px; font-size:13px;">
-        <option value="">— Pick a block —</option>
-        <option value="Block A — Oly Focus">Block A — Oly Focus</option>
-        <option value="Block B — HYROX Prep">Block B — HYROX Prep</option>
-        <option value="Block C — Strength Base">Block C — Strength Base</option>
-        <option value="Block D — Deload">Block D — Deload</option>
-      </select>
-      <select id="week-select" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:8px; font-size:13px;">
-        <option value="">— Week —</option>
-        <option>Week 1</option><option>Week 2</option><option>Week 3</option>
-        <option>Week 4</option><option>Week 5</option><option>Week 6</option>
-        <option>Week 7</option><option>Week 8</option><option>Week 9</option>
-        <option>Week 10</option><option>Week 11</option><option>Week 12</option>
-      </select>
-      <button onclick="saveCurrentBlock()" style="background:var(--accent); color:#000; border:none; padding:6px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">Save</button>
-    </div>
-  </div>
-
   <div class="section-label">Plan Builder</div>
   <div class="card" style="padding-bottom:12px;">
-    <div class="card-title">Build Your Block Chain</div>
+    <div class="card-title">Build Your Block Chain · <span id="current-block-display" style="color:var(--accent); font-weight:700;"></span></div>
     <div class="builder-palette">
       <button class="palette-btn" onclick="addBuilderBlock('oly')">🏋️ Block A</button>
       <button class="palette-btn" onclick="addBuilderBlock('hyrox')">🏁 Block B</button>
@@ -1180,18 +1160,27 @@ function renderBuilderChain() {
   }
   empty.style.display = 'none';
 
+  const currentIdx = parseInt(localStorage.getItem('currentBuilderIdx'));
+  const currentWeek = localStorage.getItem('currentWeek') || '';
+
   builderBlocks.forEach((b, i) => {
     const def = BLOCK_DEFS[b.type];
+    const isCurrent = i === currentIdx;
+    const weekOptions = Array.from({length:12},(_,k)=>`<option value="Week ${k+1}" ${currentWeek===`Week ${k+1}`?'selected':''}>Week ${k+1}</option>`).join('');
     const item = document.createElement('div');
-    item.className = 'builder-item';
+    item.className = 'builder-item' + (isCurrent ? ' builder-current' : '');
     item.draggable = true;
     item.dataset.idx = i;
     item.innerHTML = `
       <span class="builder-drag-handle" title="Drag to reorder">⠿</span>
-      <div class="b-line"><div class="b-dot" style="background:${def.dot}"></div><div class="b-connector"></div></div>
+      <div class="b-line"><div class="b-dot" style="background:${isCurrent ? 'var(--accent)' : def.dot}"></div><div class="b-connector"></div></div>
       <div class="b-content">
-        <div class="b-name">${def.name}</div>
+        <div class="b-name">${isCurrent ? '▶ ' : ''}${def.name}</div>
         <input class="b-note" value="${b.note.replace(/"/g,'&quot;')}" placeholder="Add a note…" oninput="updateBuilderNote(${i}, this.value)">
+        ${isCurrent ? `<div style="margin-top:6px;display:flex;gap:6px;align-items:center;">
+          <select onchange="setCurrentWeek(this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:12px;">${weekOptions}</select>
+          <span style="font-size:12px;color:var(--accent);">${currentWeek || 'pick a week'}</span>
+        </div>` : `<button class="b-set-current" onclick="setCurrentBlock(${i})">▶ Set as current</button>`}
       </div>
       <button class="b-delete" onclick="removeBuilderBlock(${i})" title="Remove">×</button>`;
 
@@ -1268,27 +1257,34 @@ function restoreBuilderChain() {
   if (saved) { builderBlocks = JSON.parse(saved); renderBuilderChain(); }
 }
 
-// --- Current block indicator ---
-function saveCurrentBlock() {
-  const block = document.getElementById('block-select').value;
-  const week = document.getElementById('week-select').value;
-  if (!block || !week) return;
-  localStorage.setItem('currentBlock', block);
-  localStorage.setItem('currentWeek', week);
-  updateBlockDisplay(block, week);
+// --- Current block (merged into plan builder) ---
+function setCurrentBlock(idx) {
+  localStorage.setItem('currentBuilderIdx', idx);
+  const week = localStorage.getItem('currentWeek') || '';
+  updateBlockDisplay(idx, week);
+  renderBuilderChain();
 }
 
-function updateBlockDisplay(block, week) {
+function setCurrentWeek(week) {
+  localStorage.setItem('currentWeek', week);
+  const idx = parseInt(localStorage.getItem('currentBuilderIdx'));
+  updateBlockDisplay(idx, week);
+  renderBuilderChain();
+}
+
+function updateBlockDisplay(idx, week) {
   const el = document.getElementById('current-block-display');
-  if (block && week) el.textContent = block + ' · ' + week;
+  if (!el) return;
+  const b = builderBlocks[idx];
+  if (b && week) el.textContent = BLOCK_DEFS[b.type].name + ' · ' + week;
+  else if (b) el.textContent = BLOCK_DEFS[b.type].name;
+  else el.textContent = '';
 }
 
 function restoreCurrentBlock() {
-  const block = localStorage.getItem('currentBlock');
-  const week = localStorage.getItem('currentWeek');
-  if (block) document.getElementById('block-select').value = block;
-  if (week) document.getElementById('week-select').value = week;
-  if (block && week) updateBlockDisplay(block, week);
+  const idx = parseInt(localStorage.getItem('currentBuilderIdx'));
+  const week = localStorage.getItem('currentWeek') || '';
+  if (!isNaN(idx)) updateBlockDisplay(idx, week);
 }
 
 // --- Custom sessions ---
@@ -1366,9 +1362,9 @@ function calcORM() {
 const lastPage = localStorage.getItem('lastPage');
 if (lastPage) showPage(lastPage);
 restoreChecklist();
-restoreCurrentBlock();
 restoreCustomSessions();
 restoreBuilderChain();
+restoreCurrentBlock();
 </script>
 
 </body>
