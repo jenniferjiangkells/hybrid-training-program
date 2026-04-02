@@ -133,9 +133,7 @@
   .session-item .s-tags { margin-top: 8px; }
   #session-search:focus { outline:none; border-color:var(--accent); }
   #session-search::placeholder { color:var(--muted); }
-  .tag-cloud-row { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:4px; }
-  .tag-cloud-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:3px; margin-top:6px; }
-  .tag-cloud-row:first-of-type .tag-cloud-label { margin-top:0; }
+
   .tc-tag { padding:4px 10px; border-radius:20px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-size:12px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
   .tc-tag:hover { border-color:var(--accent); color:var(--text); }
   .tc-tag.active { background:var(--accent); border-color:var(--accent); color:#000; font-weight:600; }
@@ -241,12 +239,12 @@
 
 <nav class="nav">
   <button class="active" onclick="showPage('home')">Overview</button>
+  <button onclick="showPage('sessions')">Session Menu</button>
+  <button onclick="showPage('checklist')">Weekly Check</button>
   <button onclick="showPage('blocks')">Goal Blocks</button>
   <button onclick="showPage('squats')">Squat Programs</button>
   <button onclick="showPage('running')">Running</button>
-  <button onclick="showPage('sessions')">Session Menu</button>
   <button onclick="showPage('references')">References</button>
-  <button onclick="showPage('checklist')">Weekly Check</button>
 </nav>
 
 <main>
@@ -808,13 +806,13 @@
     <div class="session-item" data-type="run" data-id="long-z2" data-tags="All blocks|Non-negotiable">
       <div class="s-name">Long Z2 Run</div>
       <div class="s-desc">45–80 min easy, fully conversational. Core aerobic builder.</div>
-      <div class="s-tags tags"><span class="tag grey">All blocks</span><span class="tag grey">Non-negotiable</span></div>
+      <div class="s-tags tags"><span class="tag green">All blocks</span><span class="tag orange">Non-negotiable</span></div>
       <button class="session-add-btn" data-sid="long-z2" data-sname="Long Z2 Run" data-stype="run"></button>
     </div>
     <div class="session-item" data-type="run" data-id="short-z2" data-tags="All blocks|Recovery">
       <div class="s-name">Short Z2 / Easy Jog</div>
       <div class="s-desc">20–30 min easy. Active recovery or interval substitute in Oly block.</div>
-      <div class="s-tags tags"><span class="tag grey">All blocks</span><span class="tag grey">Recovery</span></div>
+      <div class="s-tags tags"><span class="tag green">All blocks</span><span class="tag grey">Recovery</span></div>
       <button class="session-add-btn" data-sid="short-z2" data-sname="Short Z2 / Easy Jog" data-stype="run"></button>
     </div>
     <div class="session-item" data-type="run" data-id="short-intervals" data-tags="Block B|Base">
@@ -853,10 +851,10 @@
       <div class="s-tags tags"><span class="tag purple">Block A</span><span class="tag blue">Block C</span></div>
       <button class="session-add-btn" data-sid="rsp-session" data-sname="RSP Session" data-stype="strength"></button>
     </div>
-    <div class="session-item" data-type="strength" data-id="velocity-squat" data-tags="Block B|Block C|Maintenance">
+    <div class="session-item" data-type="strength" data-id="velocity-squat" data-tags="Block B|Block C|Maintenance|Non-negotiable">
       <div class="s-name">Velocity Squat Session</div>
       <div class="s-desc">5×5 @ 55–60% 1RM fast · 1×1 @ 80% · weekly RM ladder test.</div>
-      <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag blue">Block C</span><span class="tag grey">Maintenance</span></div>
+      <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag blue">Block C</span><span class="tag grey">Maintenance</span><span class="tag orange">Non-negotiable</span></div>
       <button class="session-add-btn" data-sid="velocity-squat" data-sname="Velocity Squat Session" data-stype="strength"></button>
     </div>
     <div class="session-item" data-type="strength" data-id="front-squat" data-tags="Block A">
@@ -889,16 +887,16 @@
       <div class="s-tags tags"><span class="tag blue">Block C</span><span class="tag grey">Block D</span></div>
       <button class="session-add-btn" data-sid="fbb-class" data-sname="Functional Bodybuilding Class" data-stype="strength"></button>
     </div>
-    <div class="session-item" data-type="metcon" data-id="hyrox-class" data-tags="Block B">
+    <div class="session-item" data-type="metcon" data-id="hyrox-class" data-tags="Block B|Non-negotiable">
       <div class="s-name">HYROX Class</div>
       <div class="s-desc">Stations + running. Progresses from technique → pace discipline → race sim.</div>
-      <div class="s-tags tags"><span class="tag green">Block B</span></div>
+      <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag orange">Non-negotiable</span></div>
       <button class="session-add-btn" data-sid="hyrox-class" data-sname="HYROX Class" data-stype="metcon"></button>
     </div>
-    <div class="session-item" data-type="metcon" data-id="crossfit-class" data-tags="All blocks">
+    <div class="session-item" data-type="metcon" data-id="crossfit-class" data-tags="All blocks|Non-negotiable">
       <div class="s-name">CrossFit Class</div>
       <div class="s-desc">General metcon, variable stimulus. Good for all blocks as conditioning filler.</div>
-      <div class="s-tags tags"><span class="tag grey">All blocks</span></div>
+      <div class="s-tags tags"><span class="tag green">All blocks</span><span class="tag orange">Non-negotiable</span></div>
       <button class="session-add-btn" data-sid="crossfit-class" data-sname="CrossFit Class" data-stype="metcon"></button>
     </div>
     <div class="session-item" data-type="metcon" data-id="short-metcon" data-tags="Block A|Low leg stress">
@@ -910,7 +908,7 @@
     <div class="session-item" data-type="recovery" data-id="z2-finisher" data-tags="All blocks|Post-strength">
       <div class="s-name">Z2 Finisher</div>
       <div class="s-desc">15–20 min easy bike or row after strength session. Active recovery.</div>
-      <div class="s-tags tags"><span class="tag grey">All blocks</span><span class="tag grey">Post-strength</span></div>
+      <div class="s-tags tags"><span class="tag green">All blocks</span><span class="tag grey">Post-strength</span></div>
       <button class="session-add-btn" data-sid="z2-finisher" data-sname="Z2 Finisher" data-stype="recovery"></button>
     </div>
     <div class="session-item" data-type="recovery" data-id="mobility" data-tags="Block D|Recovery|Red weeks">
@@ -1128,7 +1126,7 @@ function showPage(id) {
   document.querySelectorAll('.nav button').forEach((b, i) => {
     b.classList.remove('active');
   });
-  const pages = ['home','blocks','squats','running','sessions','references','checklist'];
+  const pages = ['home','sessions','checklist','blocks','squats','running','references'];
   const idx = pages.indexOf(id);
   if (idx >= 0) document.querySelectorAll('.nav button')[idx].classList.add('active');
   window.scrollTo(0, 0);
@@ -1154,7 +1152,8 @@ function toggleAcc(header) {
 }
 
 const TAG_COLOR = {
-  'Block A':'purple', 'Block B':'green', 'Block C':'blue', 'Block D':'grey', 'All blocks':'grey',
+  'Block A':'purple', 'Block B':'green', 'Block C':'blue', 'Block D':'grey',
+  'All blocks':'green', 'Non-negotiable':'orange',
   'Build':'blue', 'Peak':'green', 'Specific':'orange', 'Skill':'purple',
 };
 function tagColor(t) { return TAG_COLOR[t] || 'grey'; }
@@ -1171,25 +1170,22 @@ function renderTagCloud() {
   const cloud = document.getElementById('tag-cloud');
   if (!cloud) return;
   cloud.innerHTML = '';
+  if (activeTagFilters.size === 0) return;
   const row = document.createElement('div');
-  row.className = 'tag-cloud-row';
-  TAG_GROUPS.forEach(group => {
-    group.tags.forEach(tag => {
-      const btn = document.createElement('button');
-      btn.className = 'tc-tag' + (activeTagFilters.has(tag) ? ' active' : '');
-      btn.textContent = tag;
-      btn.onclick = () => toggleTagFilter(tag);
-      row.appendChild(btn);
-    });
+  row.style.cssText = 'display:flex; flex-wrap:wrap; gap:5px; align-items:center;';
+  activeTagFilters.forEach(tag => {
+    const btn = document.createElement('button');
+    btn.className = 'tc-tag active';
+    btn.innerHTML = `${tag} <span style="opacity:0.6; margin-left:2px;">×</span>`;
+    btn.onclick = () => toggleTagFilter(tag);
+    row.appendChild(btn);
   });
+  const clear = document.createElement('button');
+  clear.className = 'tag-cloud-clear';
+  clear.textContent = 'clear all';
+  clear.onclick = clearTagFilters;
+  row.appendChild(clear);
   cloud.appendChild(row);
-  if (activeTagFilters.size > 0) {
-    const clear = document.createElement('button');
-    clear.className = 'tag-cloud-clear';
-    clear.textContent = `× clear ${activeTagFilters.size} tag${activeTagFilters.size > 1 ? 's' : ''}`;
-    clear.onclick = clearTagFilters;
-    cloud.appendChild(clear);
-  }
 }
 
 function toggleTagFilter(tag) {
