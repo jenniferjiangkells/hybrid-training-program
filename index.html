@@ -152,30 +152,28 @@
   .chain-content .c-name { font-size: 14px; font-weight: 600; }
   .chain-content .c-dur { font-size: 12px; color: var(--muted); margin-top: 1px; }
 
-  /* WEEK PLAN */
-  .week-day { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:8px; }
-  .week-day-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-  .week-day-name { font-size:13px; font-weight:700; }
-  .week-day-name.today { color:var(--accent); }
-  .week-add-btn { background:none; border:1px solid var(--border); color:var(--muted); font-size:12px; padding:3px 10px; border-radius:20px; cursor:pointer; }
-  .week-add-btn:hover { border-color:var(--accent); color:var(--accent); }
-  .week-sessions { display:flex; flex-direction:column; gap:5px; }
-  .week-session-chip { display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border-radius:8px; padding:6px 10px; font-size:13px; }
+  /* WEEK PLAN (embedded in session menu) */
+  .week-day-strip { display:flex; gap:6px; margin-bottom:10px; overflow-x:auto; scrollbar-width:none; }
+  .week-day-strip::-webkit-scrollbar { display:none; }
+  .week-day-btn { flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 10px; border-radius:10px; border:1px solid var(--border); background:var(--surface); cursor:pointer; min-width:44px; }
+  .week-day-btn.today { border-color:var(--accent); }
+  .week-day-btn.selected { background:var(--accent); border-color:var(--accent); }
+  .week-day-btn .wdb-name { font-size:11px; font-weight:600; color:var(--muted); }
+  .week-day-btn.today .wdb-name { color:var(--accent); }
+  .week-day-btn.selected .wdb-name { color:#000; }
+  .week-day-btn .wdb-count { font-size:10px; color:var(--muted); }
+  .week-day-btn.selected .wdb-count { color:#000; opacity:0.7; }
+  .week-session-chip { display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border-radius:8px; padding:5px 8px; font-size:12px; margin-bottom:4px; }
   .week-session-chip .chip-name { font-weight:500; }
-  .week-session-chip .chip-type { font-size:11px; color:var(--muted); margin-top:1px; }
-  .week-session-chip .chip-remove { background:none; border:none; color:var(--muted); font-size:15px; cursor:pointer; padding:0 0 0 8px; line-height:1; }
+  .week-session-chip .chip-remove { background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:0 0 0 8px; line-height:1; }
   .week-session-chip .chip-remove:hover { color:var(--red); }
   .week-session-chip.type-run { border-left:3px solid var(--green); }
   .week-session-chip.type-strength { border-left:3px solid #c084fc; }
   .week-session-chip.type-metcon { border-left:3px solid var(--yellow); }
   .week-session-chip.type-recovery { border-left:3px solid var(--accent2); }
-  .picker-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); cursor:pointer; }
-  .picker-item:last-child { border-bottom:none; }
-  .picker-item:hover .picker-item-name { color:var(--accent); }
-  .picker-item-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-  .picker-item-name { font-size:14px; font-weight:500; }
-  .picker-item-desc { font-size:12px; color:var(--muted); margin-top:1px; }
-  .picker-group-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); padding:10px 0 4px; }
+  .session-add-btn { background:none; border:1px solid var(--border); color:var(--muted); font-size:11px; padding:3px 8px; border-radius:20px; cursor:pointer; margin-top:6px; white-space:nowrap; }
+  .session-add-btn.has-day { border-color:var(--accent); color:var(--accent); }
+  .session-add-btn:hover { background:var(--accent); color:#000; border-color:var(--accent); }
 
   /* PLAN BUILDER */
   .builder-palette { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
@@ -237,7 +235,6 @@
   <button onclick="showPage('squats')">Squat Programs</button>
   <button onclick="showPage('running')">Running</button>
   <button onclick="showPage('sessions')">Session Menu</button>
-  <button onclick="showPage('week')">Week Plan</button>
   <button onclick="showPage('references')">References</button>
   <button onclick="showPage('checklist')">Weekly Check</button>
 </nav>
@@ -743,6 +740,20 @@
 
 <!-- ========== SESSION MENU ========== -->
 <div id="page-sessions" class="page">
+  <div style="display:flex; align-items:baseline; justify-content:space-between;">
+    <div class="section-label" style="margin-bottom:6px;">Week Plan</div>
+    <button onclick="clearWeekPlan()" style="background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; padding:0;">Clear week</button>
+  </div>
+  <div id="week-day-strip" class="week-day-strip"></div>
+  <div id="week-selected-day" style="display:none; background:var(--surface); border:1px solid var(--accent); border-radius:var(--radius); padding:10px 12px; margin-bottom:10px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <span id="week-selected-label" style="font-size:13px; font-weight:600; color:var(--accent);"></span>
+      <button onclick="deselectDay()" style="background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; padding:0;">done</button>
+    </div>
+    <div id="week-selected-sessions"></div>
+    <div id="week-selected-empty" style="font-size:12px; color:var(--muted); display:none;">Nothing planned — add sessions below</div>
+  </div>
+
   <div class="section-label">Filter by Type</div>
   <div class="filter-row">
     <button class="filter-btn active" data-type="all" onclick="filterSessions('all', this)">All</button>
@@ -779,116 +790,115 @@
       <div class="s-name">Long Z2 Run</div>
       <div class="s-desc">45–80 min easy, fully conversational. Core aerobic builder.</div>
       <div class="s-tags tags"><span class="tag green">All blocks</span><span class="tag grey">Non-negotiable</span></div>
+      <button class="session-add-btn" data-sid="long-z2" data-sname="Long Z2 Run" data-stype="run"></button>
     </div>
     <div class="session-item" data-type="run" data-id="short-z2">
       <div class="s-name">Short Z2 / Easy Jog</div>
       <div class="s-desc">20–30 min easy. Active recovery or interval substitute in Oly block.</div>
       <div class="s-tags tags"><span class="tag green">All blocks</span><span class="tag grey">Recovery</span></div>
+      <button class="session-add-btn" data-sid="short-z2" data-sname="Short Z2 / Easy Jog" data-stype="run"></button>
     </div>
     <div class="session-item" data-type="run" data-id="short-intervals">
       <div class="s-name">Short Intervals</div>
       <div class="s-desc">6–8×400 m @ ~5:10–5:20/km · 90 s jog recovery. Intro to speed.</div>
       <div class="s-tags tags"><span class="tag blue">Block B base</span></div>
+      <button class="session-add-btn" data-sid="short-intervals" data-sname="Short Intervals" data-stype="run"></button>
     </div>
     <div class="session-item" data-type="run" data-id="mid-intervals">
       <div class="s-name">Mid Intervals</div>
       <div class="s-desc">5–6×600–800 m @ ~5:00/km · 2 min jog. Speed reserve building.</div>
       <div class="s-tags tags"><span class="tag blue">Block B build</span></div>
+      <button class="session-add-btn" data-sid="mid-intervals" data-sname="Mid Intervals" data-stype="run"></button>
     </div>
     <div class="session-item" data-type="run" data-id="race-pace">
       <div class="s-name">Race-Pace Repeats</div>
       <div class="s-desc">3–4×1 km @ target HYROX race pace · 3 min jog. Lock in the pace.</div>
       <div class="s-tags tags"><span class="tag green">Block B peak</span></div>
+      <button class="session-add-btn" data-sid="race-pace" data-sname="Race-Pace Repeats" data-stype="run"></button>
     </div>
     <div class="session-item" data-type="run" data-id="compromised-run">
       <div class="s-name">Compromised Run</div>
       <div class="s-desc">3–4 rounds: 500 m run + 20 wall balls or 40 m lunge · walk 2–3 min.</div>
       <div class="s-tags tags"><span class="tag orange">Block B specific</span><span class="tag grey">Every 2–3 weeks</span></div>
+      <button class="session-add-btn" data-sid="compromised-run" data-sname="Compromised Run" data-stype="run"></button>
     </div>
     <div class="session-item" data-type="run" data-id="tempo-run">
       <div class="s-name">Tempo Run</div>
       <div class="s-desc">20–30 min continuous @ comfortably hard (threshold). General fitness base.</div>
       <div class="s-tags tags"><span class="tag blue">Block C</span></div>
+      <button class="session-add-btn" data-sid="tempo-run" data-sname="Tempo Run" data-stype="run"></button>
     </div>
     <div class="session-item" data-type="strength" data-id="rsp-session">
       <div class="s-name">RSP Session</div>
       <div class="s-desc">Per RSP spreadsheet — back or front squat. High CNS demand.</div>
       <div class="s-tags tags"><span class="tag purple">Block A (2×/wk)</span><span class="tag blue">Block C (2–3×/wk)</span></div>
+      <button class="session-add-btn" data-sid="rsp-session" data-sname="RSP Session" data-stype="strength"></button>
     </div>
     <div class="session-item" data-type="strength" data-id="velocity-squat">
       <div class="s-name">Velocity Squat Session</div>
       <div class="s-desc">5×5 @ 55–60% 1RM fast · 1×1 @ 80% · weekly RM ladder test.</div>
       <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag blue">Block C maintenance</span></div>
+      <button class="session-add-btn" data-sid="velocity-squat" data-sname="Velocity Squat Session" data-stype="strength"></button>
     </div>
     <div class="session-item" data-type="strength" data-id="front-squat">
       <div class="s-name">Front Squat Priority</div>
       <div class="s-desc">Front squat main lift + Oly accessories (pulls, pause squats, footwork).</div>
       <div class="s-tags tags"><span class="tag purple">Block A</span></div>
+      <button class="session-add-btn" data-sid="front-squat" data-sname="Front Squat Priority" data-stype="strength"></button>
     </div>
     <div class="session-item" data-type="strength" data-id="gymnastics">
       <div class="s-name">Gymnastics Skill Block</div>
       <div class="s-desc">10–15 min fresh: pull-ups, push-ups, bar muscle-up drills, handstands, toes-to-bar. Do before squats.</div>
       <div class="s-tags tags"><span class="tag blue">Block C</span><span class="tag grey">Skill-first</span></div>
+      <button class="session-add-btn" data-sid="gymnastics" data-sname="Gymnastics Skill Block" data-stype="strength"></button>
     </div>
     <div class="session-item" data-type="strength" data-id="hyrox-strength">
       <div class="s-name">HYROX Strength Day</div>
       <div class="s-desc">Squats + walking lunges + heavy carries + wall balls. Power endurance.</div>
       <div class="s-tags tags"><span class="tag green">Block B</span></div>
+      <button class="session-add-btn" data-sid="hyrox-strength" data-sname="HYROX Strength Day" data-stype="strength"></button>
     </div>
     <div class="session-item" data-type="strength" data-id="fbb-class">
       <div class="s-name">Functional Bodybuilding Class</div>
       <div class="s-desc">Gym-programmed hypertrophy / push-pull. Structural balance work.</div>
       <div class="s-tags tags"><span class="tag blue">Block C</span><span class="tag grey">Block D</span></div>
+      <button class="session-add-btn" data-sid="fbb-class" data-sname="Functional Bodybuilding Class" data-stype="strength"></button>
     </div>
     <div class="session-item" data-type="metcon" data-id="hyrox-class">
       <div class="s-name">HYROX Class</div>
       <div class="s-desc">Stations + running. Progresses from technique → pace discipline → race sim.</div>
       <div class="s-tags tags"><span class="tag green">Block B primary</span></div>
+      <button class="session-add-btn" data-sid="hyrox-class" data-sname="HYROX Class" data-stype="metcon"></button>
     </div>
     <div class="session-item" data-type="metcon" data-id="crossfit-class">
       <div class="s-name">CrossFit Class</div>
       <div class="s-desc">General metcon, variable stimulus. Good for all blocks as conditioning filler.</div>
       <div class="s-tags tags"><span class="tag green">All blocks</span></div>
+      <button class="session-add-btn" data-sid="crossfit-class" data-sname="CrossFit Class" data-stype="metcon"></button>
     </div>
     <div class="session-item" data-type="metcon" data-id="short-metcon">
       <div class="s-name">Short Sharp Metcon</div>
       <div class="s-desc">10–15 min AMRAP/EMOM, upper-body bias or mixed. CNS-sparing.</div>
       <div class="s-tags tags"><span class="tag purple">Block A</span><span class="tag grey">Low leg stress</span></div>
+      <button class="session-add-btn" data-sid="short-metcon" data-sname="Short Sharp Metcon" data-stype="metcon"></button>
     </div>
     <div class="session-item" data-type="recovery" data-id="z2-finisher">
       <div class="s-name">Z2 Finisher</div>
       <div class="s-desc">15–20 min easy bike or row after strength session. Active recovery.</div>
       <div class="s-tags tags"><span class="tag green">Any block</span><span class="tag grey">Post-strength</span></div>
+      <button class="session-add-btn" data-sid="z2-finisher" data-sname="Z2 Finisher" data-stype="recovery"></button>
     </div>
     <div class="session-item" data-type="recovery" data-id="mobility">
       <div class="s-name">Mobility / Stretching</div>
       <div class="s-desc">Hip flexors, thoracic spine, ankles. 15–20 min. Especially post-race or red weeks.</div>
       <div class="s-tags tags"><span class="tag grey">Block D</span><span class="tag grey">Red weeks</span></div>
+      <button class="session-add-btn" data-sid="mobility" data-sname="Mobility / Stretching" data-stype="recovery"></button>
     </div>
     <div id="custom-sessions"></div>
   </div>
 </div>
 
 
-<!-- ========== WEEK PLAN ========== -->
-<div id="page-week" class="page">
-  <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:4px;">
-    <div class="section-label" style="margin:0;">This Week</div>
-    <button onclick="clearWeekPlan()" style="background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; padding:0;">Clear all</button>
-  </div>
-  <div id="week-current-block" style="font-size:12px; color:var(--muted); margin-bottom:12px;"></div>
-  <div id="week-days"></div>
-</div>
-
-<!-- Session picker sheet -->
-<div id="session-picker-overlay" onclick="closeSessionPicker()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100;"></div>
-<div id="session-picker-sheet" style="display:none; position:fixed; bottom:0; left:0; right:0; max-height:70vh; background:var(--surface); border-radius:16px 16px 0 0; z-index:101; overflow:hidden; flex-direction:column;">
-  <div style="padding:12px 16px 8px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-    <div style="font-size:14px; font-weight:600;">Add to <span id="picker-day-label"></span></div>
-    <button onclick="closeSessionPicker()" style="background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; line-height:1; padding:0;">×</button>
-  </div>
-  <div style="overflow-y:auto; padding:8px 16px 24px;" id="picker-list"></div>
-</div>
 
 <!-- ========== REFERENCES ========== -->
 <div id="page-references" class="page">
@@ -1093,12 +1103,12 @@ function showPage(id) {
   document.querySelectorAll('.nav button').forEach((b, i) => {
     b.classList.remove('active');
   });
-  const pages = ['home','blocks','squats','running','sessions','week','references','checklist'];
+  const pages = ['home','blocks','squats','running','sessions','references','checklist'];
   const idx = pages.indexOf(id);
   if (idx >= 0) document.querySelectorAll('.nav button')[idx].classList.add('active');
   window.scrollTo(0, 0);
   localStorage.setItem('lastPage', id);
-  if (id === 'week') renderWeekPlan();
+  if (id === 'sessions') renderDayStrip();
 }
 
 function showBlock(id) {
@@ -1163,10 +1173,15 @@ function applyFilters() {
   renderCustomSessions();
 }
 
-// Tag click delegation on session list
+// Session list delegation: tag clicks + add-to-day clicks
 document.getElementById('session-list').addEventListener('click', e => {
   const tag = e.target.closest('.s-tags .tag');
-  if (tag) filterByTag(tag.textContent.trim());
+  if (tag) { filterByTag(tag.textContent.trim()); return; }
+  const addBtn = e.target.closest('.session-add-btn');
+  if (addBtn) {
+    if (!selectedDay) { addBtn.textContent = '← pick a day first'; setTimeout(() => updateAddButtons(), 1500); return; }
+    addToDay(selectedDay, addBtn.dataset.sid, addBtn.dataset.sname, addBtn.dataset.stype);
+  }
 });
 
 function toggleCheck(box) {
@@ -1218,134 +1233,88 @@ function resetChecklist() {
   localStorage.removeItem('weekColour');
 }
 
-// --- Week Planner ---
+// --- Week Planner (embedded in session menu) ---
 const DAYS = ['mon','tue','wed','thu','fri','sat','sun'];
-const DAY_LABELS = { mon:'Monday', tue:'Tuesday', wed:'Wednesday', thu:'Thursday', fri:'Friday', sat:'Saturday', sun:'Sunday' };
-const TYPE_DOTS = { run:'#4caf50', strength:'#c084fc', metcon:'#ffc107', recovery:'#47c8ff' };
-
-const BUILT_IN_SESSIONS = [
-  { id:'long-z2',       name:'Long Z2 Run',                type:'run',      desc:'45–80 min easy, conversational' },
-  { id:'short-z2',      name:'Short Z2 / Easy Jog',        type:'run',      desc:'20–30 min easy' },
-  { id:'short-intervals',name:'Short Intervals',           type:'run',      desc:'6–8×400 m @ ~5:10–5:20/km' },
-  { id:'mid-intervals', name:'Mid Intervals',              type:'run',      desc:'5–6×600–800 m @ ~5:00/km' },
-  { id:'race-pace',     name:'Race-Pace Repeats',          type:'run',      desc:'3–4×1 km @ target race pace' },
-  { id:'compromised-run',name:'Compromised Run',           type:'run',      desc:'500 m run + wall balls / lunges' },
-  { id:'tempo-run',     name:'Tempo Run',                  type:'run',      desc:'20–30 min @ threshold' },
-  { id:'rsp-session',   name:'RSP Session',                type:'strength', desc:'Back or front squat per spreadsheet' },
-  { id:'velocity-squat',name:'Velocity Squat Session',     type:'strength', desc:'5×5 @ 55–60% + 1×1 @ 80%' },
-  { id:'front-squat',   name:'Front Squat Priority',       type:'strength', desc:'Front squat + Oly accessories' },
-  { id:'gymnastics',    name:'Gymnastics Skill Block',     type:'strength', desc:'Pull-ups, MU drills, handstands' },
-  { id:'hyrox-strength',name:'HYROX Strength Day',         type:'strength', desc:'Squats, lunges, carries, wall balls' },
-  { id:'fbb-class',     name:'Functional Bodybuilding',    type:'strength', desc:'Gym-programmed hypertrophy' },
-  { id:'hyrox-class',   name:'HYROX Class',                type:'metcon',   desc:'Stations + running' },
-  { id:'crossfit-class',name:'CrossFit Class',             type:'metcon',   desc:'General metcon, variable stimulus' },
-  { id:'short-metcon',  name:'Short Sharp Metcon',         type:'metcon',   desc:'10–15 min AMRAP/EMOM' },
-  { id:'z2-finisher',   name:'Z2 Finisher',                type:'recovery', desc:'15–20 min easy bike or row' },
-  { id:'mobility',      name:'Mobility / Stretching',      type:'recovery', desc:'Hip flexors, thoracic, ankles' },
-];
+const DAY_LABELS = { mon:'Mon', tue:'Tue', wed:'Wed', thu:'Thu', fri:'Fri', sat:'Sat', sun:'Sun' };
 
 let weekPlan = { mon:[], tue:[], wed:[], thu:[], fri:[], sat:[], sun:[] };
-let pickerTargetDay = null;
+let selectedDay = null;
 
-function getAllSessions() {
-  return [
-    ...BUILT_IN_SESSIONS,
-    ...customSessions.map(s => ({ id: 'custom-' + s.id, name: s.name, type: s.type, desc: s.desc || '' }))
-  ];
-}
-
-function renderWeekPlan() {
-  const container = document.getElementById('week-days');
-  container.innerHTML = '';
-
-  const today = new Date();
-  const todayName = ['sun','mon','tue','wed','thu','fri','sat'][today.getDay()];
-
-  // show current block as context
-  const cbIdx = parseInt(localStorage.getItem('currentBuilderIdx'));
-  const cbWeek = localStorage.getItem('currentWeek') || '';
-  const cbEl = document.getElementById('week-current-block');
-  if (!isNaN(cbIdx) && builderBlocks[cbIdx]) {
-    cbEl.textContent = BLOCK_DEFS[builderBlocks[cbIdx].type].name + (cbWeek ? ' · ' + cbWeek : '');
-  } else {
-    cbEl.textContent = '';
-  }
-
+function renderDayStrip() {
+  const strip = document.getElementById('week-day-strip');
+  if (!strip) return;
+  const todayKey = ['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];
+  strip.innerHTML = '';
   DAYS.forEach(day => {
-    const sessions = weekPlan[day] || [];
-    const isToday = day === todayName;
-    const div = document.createElement('div');
-    div.className = 'week-day';
-    const chipsHTML = sessions.map((s, i) => `
-      <div class="week-session-chip type-${s.type}">
-        <div>
-          <div class="chip-name">${s.name}</div>
-          <div class="chip-type">${s.type}</div>
-        </div>
-        <button class="chip-remove" onclick="removeFromDay('${day}', ${i})">×</button>
-      </div>`).join('');
-    div.innerHTML = `
-      <div class="week-day-header">
-        <span class="week-day-name${isToday ? ' today' : ''}">${DAY_LABELS[day]}${isToday ? ' · today' : ''}</span>
-        <button class="week-add-btn" onclick="openSessionPicker('${day}')">+ add</button>
-      </div>
-      <div class="week-sessions">${chipsHTML}</div>`;
-    container.appendChild(div);
+    const count = (weekPlan[day] || []).length;
+    const btn = document.createElement('button');
+    btn.className = 'week-day-btn' +
+      (day === todayKey ? ' today' : '') +
+      (day === selectedDay ? ' selected' : '');
+    btn.innerHTML = `<span class="wdb-name">${DAY_LABELS[day]}</span><span class="wdb-count">${count > 0 ? count : '·'}</span>`;
+    btn.onclick = () => toggleDaySelection(day);
+    strip.appendChild(btn);
+  });
+  renderSelectedDay();
+  updateAddButtons();
+}
+
+function toggleDaySelection(day) {
+  selectedDay = selectedDay === day ? null : day;
+  renderDayStrip();
+}
+
+function deselectDay() {
+  selectedDay = null;
+  renderDayStrip();
+}
+
+function renderSelectedDay() {
+  const panel = document.getElementById('week-selected-day');
+  const label = document.getElementById('week-selected-label');
+  const sessionList = document.getElementById('week-selected-sessions');
+  const empty = document.getElementById('week-selected-empty');
+  if (!selectedDay) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  const fullLabels = { mon:'Monday', tue:'Tuesday', wed:'Wednesday', thu:'Thursday', fri:'Friday', sat:'Saturday', sun:'Sunday' };
+  label.textContent = fullLabels[selectedDay];
+  const sessions = weekPlan[selectedDay] || [];
+  sessionList.innerHTML = sessions.map((s, i) => `
+    <div class="week-session-chip type-${s.type}">
+      <span class="chip-name">${s.name}</span>
+      <button class="chip-remove" onclick="removeFromDay('${selectedDay}',${i})">×</button>
+    </div>`).join('');
+  empty.style.display = sessions.length ? 'none' : 'block';
+}
+
+function updateAddButtons() {
+  document.querySelectorAll('.session-add-btn').forEach(btn => {
+    if (selectedDay) {
+      btn.textContent = `+ ${DAY_LABELS[selectedDay]}`;
+      btn.classList.add('has-day');
+    } else {
+      btn.textContent = '+ add to day';
+      btn.classList.remove('has-day');
+    }
   });
 }
 
-function openSessionPicker(day) {
-  pickerTargetDay = day;
-  document.getElementById('picker-day-label').textContent = DAY_LABELS[day];
-  const list = document.getElementById('picker-list');
-  list.innerHTML = '';
-  const groups = { run:'🏃 Run', strength:'🏋️ Strength', metcon:'🔥 Metcon', recovery:'💤 Recovery' };
-  Object.entries(groups).forEach(([type, label]) => {
-    const sessions = getAllSessions().filter(s => s.type === type);
-    if (!sessions.length) return;
-    const groupLabel = document.createElement('div');
-    groupLabel.className = 'picker-group-label';
-    groupLabel.textContent = label;
-    list.appendChild(groupLabel);
-    sessions.forEach(s => {
-      const item = document.createElement('div');
-      item.className = 'picker-item';
-      item.innerHTML = `
-        <div class="picker-item-dot" style="background:${TYPE_DOTS[s.type]}"></div>
-        <div><div class="picker-item-name">${s.name}</div><div class="picker-item-desc">${s.desc}</div></div>`;
-      item.onclick = () => addToDay(day, s);
-      list.appendChild(item);
-    });
-  });
-  const overlay = document.getElementById('session-picker-overlay');
-  const sheet = document.getElementById('session-picker-sheet');
-  overlay.style.display = 'block';
-  sheet.style.display = 'flex';
-}
-
-function closeSessionPicker() {
-  document.getElementById('session-picker-overlay').style.display = 'none';
-  document.getElementById('session-picker-sheet').style.display = 'none';
-  pickerTargetDay = null;
-}
-
-function addToDay(day, session) {
-  weekPlan[day].push({ id: session.id, name: session.name, type: session.type });
+function addToDay(day, id, name, type) {
+  weekPlan[day].push({ id, name, type });
   saveWeekPlan();
-  renderWeekPlan();
-  closeSessionPicker();
+  renderDayStrip();
 }
 
 function removeFromDay(day, idx) {
   weekPlan[day].splice(idx, 1);
   saveWeekPlan();
-  renderWeekPlan();
+  renderDayStrip();
 }
 
 function clearWeekPlan() {
   weekPlan = { mon:[], tue:[], wed:[], thu:[], fri:[], sat:[], sun:[] };
   saveWeekPlan();
-  renderWeekPlan();
+  renderDayStrip();
 }
 
 function saveWeekPlan() {
@@ -1355,7 +1324,7 @@ function saveWeekPlan() {
 function restoreWeekPlan() {
   const saved = localStorage.getItem('weekPlan');
   if (saved) weekPlan = JSON.parse(saved);
-  renderWeekPlan();
+  renderDayStrip();
 }
 
 // --- Plan Builder ---
@@ -1563,13 +1532,15 @@ function renderCustomSessions() {
     const tagMatch = !activeTagFilter || s.tags.some(t => t === activeTagFilter);
     if (!typeMatch || !tagMatch) return;
     const tagHTML = s.tags.map(t => `<span class="tag grey s-tags" style="cursor:pointer;" onclick="filterByTag('${t.replace(/'/g,"\\\'")}')">${t}</span>`).join('');
+    const addLabel = selectedDay ? `+ ${DAY_LABELS[selectedDay]}` : '+ add to day';
     const div = document.createElement('div');
     div.className = 'session-item custom-session';
     div.dataset.type = s.type;
     div.innerHTML = `
       <div class="s-name">⭐ ${s.name}<button class="s-delete" onclick="deleteCustomSession(${s.id})" title="Delete">×</button></div>
       ${s.desc ? `<div class="s-desc">${s.desc}</div>` : ''}
-      ${tagHTML ? `<div class="s-tags tags">${tagHTML}</div>` : ''}`;
+      ${tagHTML ? `<div class="s-tags tags">${tagHTML}</div>` : ''}
+      <button class="session-add-btn${selectedDay ? ' has-day' : ''}" onclick="${selectedDay ? `addToDay('${selectedDay}','custom-${s.id}','${s.name.replace(/'/g,"\\'")}','${s.type}')` : `this.textContent='← pick a day first';setTimeout(()=>this.textContent='+ add to day',1500)`}">${addLabel}</button>`;
     container.appendChild(div);
   });
 }
