@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hybrid Training System</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --accent: #e8ff47;
+    --accent2: #47c8ff;
+    --text: #f0f0f0;
+    --muted: #888;
+    --green: #4caf50;
+    --yellow: #ffc107;
+    --red: #f44336;
+    --radius: 12px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.6; min-height: 100vh; }
+
+  /* HEADER */
+  .header { padding: 24px 16px 12px; border-bottom: 1px solid var(--border); }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  /* NAV TABS */
+  .nav { display: flex; overflow-x: auto; gap: 6px; padding: 12px 16px; border-bottom: 1px solid var(--border); scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav button { flex-shrink: 0; padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .nav button.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  /* MAIN */
+  main { padding: 16px; max-width: 600px; margin: 0 auto; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .card h2 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .card p { color: var(--text); font-size: 14px; line-height: 1.6; }
+
+  /* SECTION LABEL */
+  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 20px 0 8px; }
+
+  /* NON-NEGOTIABLES */
+  .nn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .nn-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .nn-item .icon { font-size: 20px; margin-bottom: 6px; }
+  .nn-item .label { font-size: 13px; font-weight: 600; }
+  .nn-item .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* BLOCK SELECTOR */
+  .block-cards { display: flex; flex-direction: column; gap: 10px; }
+  .block-btn { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; text-align: left; cursor: pointer; transition: all 0.2s; width: 100%; display: flex; align-items: center; gap: 12px; }
+  .block-btn:hover, .block-btn.selected { border-color: var(--accent); background: var(--surface2); }
+  .block-btn .emoji { font-size: 24px; flex-shrink: 0; }
+  .block-btn .block-info .name { font-size: 15px; font-weight: 700; color: var(--text); }
+  .block-btn .block-info .desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .block-detail { display: none; }
+  .block-detail.active { display: block; }
+  .back-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer; padding: 0 0 16px; }
+
+  /* ROWS */
+  .row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+  .row:last-child { border-bottom: none; }
+  .row .key { font-size: 13px; color: var(--muted); flex-shrink: 0; width: 120px; }
+  .row .val { font-size: 13px; color: var(--text); text-align: right; flex: 1; }
+
+  /* TAGS */
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 500; }
+  .tag.green { background: #1a3320; color: #4caf50; }
+  .tag.blue { background: #0d2b3e; color: #47c8ff; }
+  .tag.yellow { background: #332a00; color: #ffc107; }
+  .tag.purple { background: #2a1a3e; color: #b47fff; }
+  .tag.orange { background: #331a00; color: #ff8c47; }
+  .tag.grey { background: var(--surface2); color: var(--muted); }
+
+  /* PILL BADGE */
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; background: var(--accent); color: #000; margin-left: 8px; vertical-align: middle; }
+  .badge.muted { background: var(--surface2); color: var(--muted); }
+
+  /* RPE INDICATOR */
+  .rpe-row { display: flex; gap: 6px; margin-top: 8px; }
+  .rpe-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+
+  /* CHECKLIST */
+  .checklist { list-style: none; }
+  .checklist li { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .checklist li:last-child { border-bottom: none; }
+  .check-box { width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 6px; flex-shrink: 0; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .check-box.checked { background: var(--accent); border-color: var(--accent); }
+  .check-box.checked::after { content: "✓"; font-size: 13px; color: #000; font-weight: 700; }
+  .checklist .sub-text { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ACCORDION */
+  .accordion { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 8px; }
+  .accordion-header { padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: var(--surface); }
+  .accordion-header .acc-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .accordion-header .chevron { color: var(--muted); transition: transform 0.2s; font-size: 12px; }
+  .accordion-header.open .chevron { transform: rotate(180deg); }
+  .accordion-body { display: none; padding: 0 16px 14px; background: var(--surface); border-top: 1px solid var(--border); }
+  .accordion-body.open { display: block; }
+  .acc-row { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .acc-row:last-child { border-bottom: none; }
+  .acc-row .acc-label { color: var(--muted); font-size: 12px; margin-bottom: 2px; }
+
+  /* RPE WEEK SELECTOR */
+  .rpe-selector { display: flex; gap: 8px; margin-bottom: 16px; }
+  .rpe-btn { flex: 1; padding: 12px 6px; border-radius: 10px; border: 2px solid transparent; cursor: pointer; text-align: center; font-weight: 700; font-size: 14px; transition: all 0.2s; }
+  .rpe-btn.green-btn { background: #1a3320; color: #4caf50; border-color: #1a3320; }
+  .rpe-btn.yellow-btn { background: #332a00; color: #ffc107; border-color: #332a00; }
+  .rpe-btn.red-btn { background: #2d1010; color: #f44336; border-color: #2d1010; }
+  .rpe-btn.active.green-btn { border-color: #4caf50; }
+  .rpe-btn.active.yellow-btn { border-color: #ffc107; }
+  .rpe-btn.active.red-btn { border-color: #f44336; }
+  .rpe-detail { background: var(--surface2); border-radius: 10px; padding: 14px; font-size: 13px; line-height: 1.7; }
+  .rpe-detail .rpe-title { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+
+  /* SESSION MENU FILTERS */
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filter-btn { padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 12px; cursor: pointer; transition: all 0.2s; }
+  .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .session-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .session-item .s-name { font-size: 14px; font-weight: 600; }
+  .session-item .s-desc { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .session-item .s-tags { margin-top: 8px; }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* CHAIN VIZ */
+  .chain { display: flex; flex-direction: column; gap: 0; }
+  .chain-item { display: flex; align-items: stretch; gap: 12px; }
+  .chain-line { display: flex; flex-direction: column; align-items: center; }
+  .chain-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 5px; }
+  .chain-connector { width: 2px; background: var(--border); flex: 1; min-height: 16px; }
+  .chain-item:last-child .chain-connector { display: none; }
+  .chain-content { padding-bottom: 16px; flex: 1; }
+  .chain-content .c-name { font-size: 14px; font-weight: 600; }
+  .chain-content .c-dur { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  /* SQUAT PROGRAMS */
+  .prog-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; }
+  .prog-card .prog-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .prog-card .prog-sub { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  .prog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .prog-stat { background: var(--surface2); border-radius: 8px; padding: 10px; }
+  .prog-stat .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .prog-stat .stat-val { font-size: 14px; font-weight: 600; margin-top: 3px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 380px) {
+    .nn-grid { grid-template-columns: 1fr; }
+    .prog-grid { grid-template-columns: 1fr; }
+  }
+
+  .ref-list { display:flex; flex-direction:column; gap:10px; }
+  .ref-item { background: var(--surface); border:1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .ref-item a { color: var(--accent2); text-decoration: none; font-size: 14px; font-weight: 600; }
+  .ref-item a:hover { text-decoration: underline; }
+  .ref-item .ref-desc { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.6; }
+  .why-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-top: 10px; font-size: 13px; line-height: 1.7; }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Hybrid Training System</h1>
+  <p>Modular · Goal-driven · Class-compatible</p>
+</div>
+
+<nav class="nav">
+  <button class="active" onclick="showPage('home')">Overview</button>
+  <button onclick="showPage('blocks')">Goal Blocks</button>
+  <button onclick="showPage('squats')">Squat Programs</button>
+  <button onclick="showPage('running')">Running</button>
+  <button onclick="showPage('sessions')">Session Menu</button>
+  <button onclick="showPage('references')">References</button>
+  <button onclick="showPage('checklist')">Weekly Check</button>
+</nav>
+
+<main>
+
+<!-- ========== HOME ========== -->
+<div id="page-home" class="page active">
+  <div class="section-label">Your Foundation</div>
+  <div class="card">
+    <div class="card-title">Non-Negotiables — Every Week</div>
+    <div class="nn-grid">
+      <div class="nn-item">
+        <div class="icon">🏃</div>
+        <div class="label">Long Z2 Run</div>
+        <div class="sub">45–80 min easy</div>
+      </div>
+      <div class="nn-item">
+        <div class="icon">⚡</div>
+        <div class="label">Quality Run</div>
+        <div class="sub">Interval or tempo</div>
+      </div>
+      <div class="nn-item">
+        <div class="icon">🏋️</div>
+        <div class="label">Leg Strength</div>
+        <div class="sub">Squat program</div>
+      </div>
+      <div class="nn-item">
+        <div class="icon">🔥</div>
+        <div class="label">Hard Conditioning</div>
+        <div class="sub">HYROX / CF class</div>
+      </div>
+    </div>
+    <div style="margin-top:12px; font-size:13px; color:var(--muted); line-height:1.6;">
+      <strong style="color:var(--text)">2 runs + 1 squat + 1 metcon</strong> is your baseline. It's maintainable across every block without accumulating fatigue. Everything else is optional volume added when recovery is good.
+    </div>
+  </div>
+
+  <div class="section-label">Block Structure</div>
+  <div class="card">
+    <div class="card-title">How to Use This System</div>
+    <div style="font-size:14px; line-height:1.7;">
+      <p>Pick <strong>one goal block</strong> from the menu. Commit 6–12 weeks. Use your gym classes as fixed anchors and self-program the gaps.</p>
+      <div class="divider"></div>
+      <div class="row">
+        <span class="key">Endpoint</span>
+        <span class="val">Race, sim, checkpoint — any works</span>
+      </div>
+      <div class="row">
+        <span class="key">Block length</span>
+        <span class="val">6–12 weeks. Don't repeat same block 12+ weeks</span>
+      </div>
+      <div class="row">
+        <span class="key">Gym classes</span>
+        <span class="val">Fixed anchors — build around them</span>
+      </div>
+      <div class="row">
+        <span class="key">Self-programmed</span>
+        <span class="val">Long run + interval run + squat day</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Example Block Chain</div>
+  <div class="card">
+    <div class="chain">
+      <div class="chain-item">
+        <div class="chain-line"><div class="chain-dot"></div><div class="chain-connector"></div></div>
+        <div class="chain-content"><div class="c-name">💪 Block C — Strength Base</div><div class="c-dur">6 weeks · RSP 2×/week · squat PR goal</div></div>
+      </div>
+      <div class="chain-item">
+        <div class="chain-line"><div class="chain-dot" style="background:var(--muted)"></div><div class="chain-connector"></div></div>
+        <div class="chain-content"><div class="c-name">🔄 Block D — Deload</div><div class="c-dur">2 weeks · recover + reassess</div></div>
+      </div>
+      <div class="chain-item">
+        <div class="chain-line"><div class="chain-dot"></div><div class="chain-connector"></div></div>
+        <div class="chain-content"><div class="c-name">🏁 Block B — HYROX Prep</div><div class="c-dur">8 weeks · velocity squats + full Runna</div></div>
+      </div>
+      <div class="chain-item">
+        <div class="chain-line"><div class="chain-dot" style="background:var(--accent2)"></div><div class="chain-connector"></div></div>
+        <div class="chain-content"><div class="c-name">🏆 Race or Sim</div><div class="c-dur">Test your fitness</div></div>
+      </div>
+      <div class="chain-item">
+        <div class="chain-line"><div class="chain-dot" style="background:var(--muted)"></div><div class="chain-connector"></div></div>
+        <div class="chain-content"><div class="c-name">🔄 Block D — Reset</div><div class="c-dur">2 weeks</div></div>
+      </div>
+      <div class="chain-item">
+        <div class="chain-line"><div class="chain-dot"></div><div class="chain-connector"></div></div>
+        <div class="chain-content"><div class="c-name">🏋️ Block A — Oly Focus</div><div class="c-dur">8 weeks · RSP 2×/week on front squat</div></div>
+      </div>
+    </div>
+    <div style="font-size:12px; color:var(--muted); padding-top:4px;">No race booked? Cycle C → A → C with a HYROX sim every 4–6 months.</div>
+  </div>
+</div>
+
+<!-- ========== BLOCKS ========== -->
+<div id="page-blocks" class="page">
+
+  <div id="block-list">
+    <div class="section-label">Select a Goal Block</div>
+
+    <div class="block-cards">
+      <button class="block-btn" onclick="showBlock('oly')">
+        <span class="emoji">🏋️</span>
+        <div class="block-info">
+          <div class="name">Block A — Olympic Lifting</div>
+          <div class="desc">Snatch / C&J focus. Running and metcon take a back seat.</div>
+        </div>
+      </button>
+      <button class="block-btn" onclick="showBlock('hyrox')">
+        <span class="emoji">🏁</span>
+        <div class="block-info">
+          <div class="name">Block B — HYROX Prep</div>
+          <div class="desc">Race or sim target. Running economy + power endurance.</div>
+        </div>
+      </button>
+      <button class="block-btn" onclick="showBlock('general')">
+        <span class="emoji">💪</span>
+        <div class="block-info">
+          <div class="name">Block C — General Strength</div>
+          <div class="desc">No race booked. Strength gains + aerobic maintenance.</div>
+        </div>
+      </button>
+      <button class="block-btn" onclick="showBlock('deload')">
+        <span class="emoji">🔄</span>
+        <div class="block-info">
+          <div class="name">Block D — Deload / Reset</div>
+          <div class="desc">Post-race or post-hard-block. 2–4 weeks max.</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- OLY BLOCK -->
+  <div id="block-oly" class="block-detail">
+    <button class="back-btn" onclick="showBlockList()">← All Blocks</button>
+    <div class="card">
+      <div class="card-title">Block A</div>
+      <h2>🏋️ Olympic Lifting Focus</h2>
+      <p style="margin-top:6px; font-size:13px; color:var(--muted);">Technical skill + explosive power. Lower metcon stress to keep CNS fresh for lifting.</p>
+      <div class="tags">
+        <span class="tag purple">6–10 weeks</span>
+        <span class="tag grey">Snatch / C&J PR</span>
+        <span class="tag grey">Front squat strength</span>
+      </div>
+    </div>
+
+    <div class="section-label">Weekly Structure</div>
+    <div class="card">
+      <div class="row"><span class="key">Oly sessions</span><span class="val">2–3×/week via gym class or Weightlifting.ai block</span></div>
+      <div class="row"><span class="key">Squat day</span><span class="val">1× self-programmed, front squat priority — unless already covered inside Weightlifting.ai</span></div>
+      <div class="row"><span class="key">Long run</span><span class="val">1× Z2, 45–60 min (non-negotiable — protect the base)</span></div>
+      <div class="row"><span class="key">Quality run</span><span class="val">Reduce intensity by 10–15 s/km OR swap for easy 30 min jog</span></div>
+      <div class="row"><span class="key">Metcon</span><span class="val">Optional — short, upper-body bias, low leg stress</span></div>
+    </div>
+
+    <div class="section-label">Pull Back</div>
+    <div class="card" style="border-color: #f4433633;">
+      <p style="font-size:13px; line-height:1.7;">Avoid long compromised runs, heavy carries, HYROX-specific stations. These fry the legs you need fresh for lifting. Keep conditioning sessions short and aerobic.</p>
+    </div>
+
+    <div class="section-label">Programming Options</div>
+    <div class="card">
+      <div class="row"><span class="key">RSP 2×/week</span><span class="val">On back or front squat. Don't run RSP 3×/week alongside full Oly — too much CNS.</span></div>
+      <div class="row"><span class="key">Velocity-based</span><span class="val">Better if Oly class volume is already high — lower residual fatigue.</span></div>
+      <div class="row"><span class="key">Weightlifting.ai</span><span class="val">Strong option for 6-week Oly-focused blocks. Let it be the main lifting anchor and do not layer extra squat volume on top if the program already includes squats and pulls.</span></div>
+    </div>
+
+    <div class="section-label">Block Goals</div>
+    <div class="card">
+      <div class="tags">
+        <span class="tag purple">Snatch PR</span>
+        <span class="tag purple">C&J PR</span>
+        <span class="tag purple">Master catch position</span>
+        <span class="tag purple">Front squat 1RM up</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- HYROX BLOCK -->
+  <div id="block-hyrox" class="block-detail">
+    <button class="back-btn" onclick="showBlockList()">← All Blocks</button>
+    <div class="card">
+      <div class="card-title">Block B</div>
+      <h2>🏁 HYROX Prep Focus</h2>
+      <p style="margin-top:6px; font-size:13px; color:var(--muted);">Running economy + power endurance + station-specific fitness. Race or sim as endpoint.</p>
+      <div class="tags">
+        <span class="tag green">8–12 weeks</span>
+        <span class="tag grey">Race-ready</span>
+        <span class="tag grey">Pace discipline</span>
+      </div>
+    </div>
+
+    <div class="section-label">Weekly Structure</div>
+    <div class="card">
+      <div class="row"><span class="key">Runs</span><span class="val">Runna 2×/week plan, full progression (interval + long run)</span></div>
+      <div class="row"><span class="key">HYROX class</span><span class="val">Primary metcon anchor — technique → pace discipline → race sim</span></div>
+      <div class="row"><span class="key">Squat day</span><span class="val">1× self-programmed, HYROX accessories (lunges, carries, wall balls)</span></div>
+      <div class="row"><span class="key">Extra Z2</span><span class="val">Optional easy bike/row on recovery days</span></div>
+    </div>
+
+    <div class="section-label">Key Stimulus</div>
+    <div class="card" style="border-color:#e8ff4733;">
+      <p style="font-size:13px; line-height:1.7;"><strong>Compromised runs every 2–3 weeks:</strong> either your HYROX class or interval session becomes a circuit of run + stations (e.g. 3×500 m run + 20 wall balls + 40 m lunge). This is the core Block B adaptation.</p>
+    </div>
+
+    <div class="section-label">HYROX Class by Phase</div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-title">📗 Early weeks — Technique</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="accordion-body">
+        <div class="acc-row">Show up and move well. Runs should feel easy (6:00–6:30/km). "Can I do 8 rounds and survive?"</div>
+      </div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-title">📙 Mid weeks — Pace Awareness</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="accordion-body">
+        <div class="acc-row">Push runs toward target HYROX pace. Stations should hurt, but runs should feel "controlled fast." "Can I hold this pace when legs are cooked?"</div>
+      </div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAcc(this)">
+        <span class="acc-title">📕 Late weeks — Race Sim</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="accordion-body">
+        <div class="acc-row">Target runs at <strong>exact race pace</strong>. If you deviate ±10 s/km, note it as data for race strategy. "This run IS the race."</div>
+      </div>
+    </div>
+
+    <div class="section-label">Squat Program</div>
+    <div class="card">
+      <div class="row"><span class="key">Velocity-based</span><span class="val">Best fit — submaximal load, fully compatible with full Runna + HYROX classes</span></div>
+      <div class="row"><span class="key">RSP</span><span class="val">Too recovery-intensive to pair with full running + class volume</span></div>
+    </div>
+
+    <div class="section-label">Block Goals</div>
+    <div class="card">
+      <div class="tags">
+        <span class="tag green">Sub-X HYROX time</span>
+        <span class="tag green">Hold pace every split</span>
+        <span class="tag green">No station stops</span>
+        <span class="tag green">Sled push unbroken</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GENERAL BLOCK -->
+  <div id="block-general" class="block-detail">
+    <button class="back-btn" onclick="showBlockList()">← All Blocks</button>
+    <div class="card">
+      <div class="card-title">Block C</div>
+      <h2>💪 General Strength + Fitness</h2>
+      <p style="margin-top:6px; font-size:13px; color:var(--muted);">No race, no Oly peak. Strength gains + aerobic maintenance. Great as a reset or dedicated strength cycle between blocks.</p>
+      <div class="tags">
+        <span class="tag blue">6–10 weeks</span>
+        <span class="tag grey">Squat PR</span>
+        <span class="tag grey">Aerobic maintenance</span>
+      </div>
+    </div>
+
+    <div class="section-label">Weekly Structure</div>
+    <div class="card">
+      <div class="row"><span class="key">Strength</span><span class="val">1–2× heavy compound day (back squat, deadlift, press)</span></div>
+      <div class="row"><span class="key">Skill work</span><span class="val">10–15 min fresh at the start: pull-ups, push-ups, bar muscle-up drills, handstands, toes-to-bar</span></div>
+      <div class="row"><span class="key">Classes</span><span class="val">CrossFit or functional bodybuilding as conditioning</span></div>
+      <div class="row"><span class="key">Runs</span><span class="val">Runna 2×/week, or just long run + easy jog if reducing load</span></div>
+      <div class="row"><span class="key">Optional</span><span class="val">Extra class or Z2 when recovery is good</span></div>
+    </div>
+
+    <div class="section-label">Squat Program</div>
+    <div class="card">
+      <div class="row"><span class="key">RSP 2×/week</span><span class="val">Best if explicit goal is a squat PR. Reduce Runna intervals to easy jogs during the 6-week RSP cycle.</span></div>
+      <div class="row"><span class="key">RSP 3×/week</span><span class="val">Most aggressive option. Keep running to minimum — long run + easy Z2 only.</span></div>
+      <div class="row"><span class="key">Velocity-based</span><span class="val">Better if keeping running and conditioning quality high. Run as single squat day alongside full Runna + classes.</span></div>
+    </div>
+
+    <div class="section-label">Block Variants</div>
+    <div class="card">
+      <div class="row"><span class="key">Strength Peak</span><span class="val">RSP-led block. Minimal skill work. Goal = squat PR.</span></div>
+      <div class="row"><span class="key">Balanced Fitness</span><span class="val">Velocity squats + full Runna + classes. General all-rounder.</span></div>
+      <div class="row"><span class="key">Skills + Strength</span><span class="val">Skill-first on strength day, then squat, then accessories. Great for pull-ups, push-ups, BMU, HSPU progress.</span></div>
+    </div>
+    <div class="section-label">Block Goals</div>
+    <div class="card">
+      <div class="tags">
+        <span class="tag blue">+5–10 kg squat 1RM</span>
+        <span class="tag blue">Maintain running base</span>
+        <span class="tag blue">Structural balance</span>
+        <span class="tag blue">Gymnastics skill progress</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELOAD BLOCK -->
+  <div id="block-deload" class="block-detail">
+    <button class="back-btn" onclick="showBlockList()">← All Blocks</button>
+    <div class="card">
+      <div class="card-title">Block D</div>
+      <h2>🔄 Deload / Reset</h2>
+      <p style="margin-top:6px; font-size:13px; color:var(--muted);">After a race or hard block. Volume -30–50%. Keep intensity moderate. 2–4 weeks max.</p>
+      <div class="tags">
+        <span class="tag grey">2–4 weeks</span>
+        <span class="tag grey">Post-race</span>
+        <span class="tag grey">Post-hard-block</span>
+      </div>
+    </div>
+
+    <div class="section-label">Weekly Structure</div>
+    <div class="card">
+      <div class="row"><span class="key">Long run</span><span class="val">Shorter — 40–50 min easy, conversational</span></div>
+      <div class="row"><span class="key">Quality run</span><span class="val">Skip or swap for easy 30 min jog</span></div>
+      <div class="row"><span class="key">Squat</span><span class="val">Light session only — RPE ≤6, technique focus</span></div>
+      <div class="row"><span class="key">Class</span><span class="val">1× any class, fun, no ego</span></div>
+      <div class="row"><span class="key">Other</span><span class="val">Extra Z2, mobility, walks — whatever feels good</span></div>
+    </div>
+
+    <div class="section-label">Goal</div>
+    <div class="card">
+      <p style="font-size:13px; line-height:1.7;">Stay active, recover, and decide what the next goal block is. Don't extend beyond 4 weeks — detraining begins. Two red weeks in a row = you need a deload.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========== SQUATS ========== -->
+<div id="page-squats" class="page">
+  <div class="section-label">Your Programs</div>
+
+  <div class="prog-card">
+    <div class="prog-name">Russian Squat Program</div>
+    <div class="prog-sub">High frequency peaking program — designed to drive a 1RM PR</div>
+    <div class="prog-grid">
+      <div class="prog-stat"><div class="stat-label">Frequency</div><div class="stat-val">2× or 3×/week</div></div>
+      <div class="prog-stat"><div class="stat-label">Duration</div><div class="stat-val">6 weeks → deload</div></div>
+      <div class="prog-stat"><div class="stat-label">Stress</div><div class="stat-val" style="color:#f44336;">High</div></div>
+      <div class="prog-stat"><div class="stat-label">Lift</div><div class="stat-val">Back or Front squat</div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="section-label" style="margin-top:0">Block Fit</div>
+    <div class="row"><span class="key">Best for</span><span class="val">Block C (squat PR cycle) or Block A (front squat, 2×/week only)</span></div>
+    <div class="row"><span class="key">3×/week</span><span class="val">Reduce running to minimum — long run + easy Z2 only. No hard intervals.</span></div>
+    <div class="row"><span class="key">2×/week</span><span class="val">More manageable. Compatible with Oly classes + light running. OK in Block A.</span></div>
+    <div class="row"><span class="key">Avoid pairing with</span><span class="val">Full Runna plan + HYROX classes simultaneously</span></div>
+  </div>
+
+  <div class="prog-card">
+    <div class="prog-name">Velocity-Based Program</div>
+    <div class="prog-sub">5×5 @ 55–60% (fast) · 1×1 @ 80% · weekly RM ladder testing</div>
+    <div class="prog-grid">
+      <div class="prog-stat"><div class="stat-label">Frequency</div><div class="stat-val">1×/week</div></div>
+      <div class="prog-stat"><div class="stat-label">Duration</div><div class="stat-val">6–8 weeks</div></div>
+      <div class="prog-stat"><div class="stat-label">Stress</div><div class="stat-val" style="color:#4caf50;">Low–Moderate</div></div>
+      <div class="prog-stat"><div class="stat-label">Focus</div><div class="stat-val">Speed + power output</div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="section-label" style="margin-top:0">Block Fit</div>
+    <div class="row"><span class="key">Best for</span><span class="val">Block B (HYROX) or Block C (maintenance while running)</span></div>
+    <div class="row"><span class="key">Run compat.</span><span class="val">Fully compatible with Runna 2×/week + HYROX classes</span></div>
+    <div class="row"><span class="key">Why it works</span><span class="val">Speed focus trains power output on fatigued legs — exactly what HYROX demands</span></div>
+    <div class="row"><span class="key">RM testing</span><span class="val">Weekly ladder (10RM → 8RM → ... → 1RM) gives clear progress signal</span></div>
+  </div>
+
+  <div class="section-label">Pairing Matrix</div>
+  <div class="card">
+    <div class="row"><span class="key" style="width:auto; flex:1">Program</span><span class="val" style="width:80px; flex:none; text-align:center">Block B</span><span class="val" style="width:80px; flex:none; text-align:center">Block A</span><span class="val" style="width:80px; flex:none; text-align:center">Block C</span></div>
+    <div class="row"><span class="key" style="width:auto; flex:1">RSP 3×/week</span><span class="val" style="width:80px; flex:none; text-align:center">❌</span><span class="val" style="width:80px; flex:none; text-align:center">❌</span><span class="val" style="width:80px; flex:none; text-align:center">✅</span></div>
+    <div class="row"><span class="key" style="width:auto; flex:1">RSP 2×/week</span><span class="val" style="width:80px; flex:none; text-align:center">⚠️</span><span class="val" style="width:80px; flex:none; text-align:center">✅</span><span class="val" style="width:80px; flex:none; text-align:center">✅</span></div>
+    <div class="row"><span class="key" style="width:auto; flex:1">Velocity</span><span class="val" style="width:80px; flex:none; text-align:center">✅</span><span class="val" style="width:80px; flex:none; text-align:center">✅</span><span class="val" style="width:80px; flex:none; text-align:center">✅</span></div>
+  </div>
+</div>
+
+<!-- ========== RUNNING ========== -->
+<div id="page-running" class="page">
+
+  <div class="section-label">Runna Plan</div>
+  <div class="card">
+    <p style="font-size:14px; line-height:1.7;">Runna's HYROX 2×/week plan (1 interval/tempo + 1 long run) maps directly onto your two run non-negotiables. It's sustainable across all blocks with per-block adjustments.</p>
+    <div class="divider"></div>
+    <div class="row"><span class="key">Block B</span><span class="val">Run as written — full progression</span></div>
+    <div class="row"><span class="key">Block C</span><span class="val">Run as written; dial back interval pace if squat loading peaks</span></div>
+    <div class="row"><span class="key">Block A</span><span class="val">Keep long run; reduce interval intensity 10–15 s/km or swap for easy 30 min jog</span></div>
+    <div class="row"><span class="key">Block D</span><span class="val">Long run only (40–50 min easy); skip interval session</span></div>
+  </div>
+
+  <div class="section-label">Maintenance Base</div>
+  <div class="card">
+    <p style="font-size:13px; line-height:1.7; margin-bottom:12px;">From your non-negotiables alone, you'll naturally accumulate a solid hybrid maintenance base:</p>
+    <div class="row"><span class="key">Long run</span><span class="val">8–12 km</span></div>
+    <div class="row"><span class="key">Interval session</span><span class="val">5–7 km incl. warm-up/cool-down</span></div>
+    <div class="row"><span class="key">HYROX class</span><span class="val">~3–5 km</span></div>
+    <div class="row"><span class="key">Weekly total</span><span class="val"><strong>~16–24 km/week</strong></span></div>
+    <div style="margin-top:10px; font-size:12px; color:var(--muted);">When HYROX classes drop out (Oly block), swap class running for a short 20–30 min easy jog to keep legs ticking.</div>
+  </div>
+
+  <div class="section-label">Does HYROX Class Running Count?</div>
+  <div class="card">
+    <div class="row"><span class="key">Deliberately pacing hard</span><span class="val">✅ Quality run — can sub your interval session that week</span></div>
+    <div class="row"><span class="key">Controlled / moderate</span><span class="val">Aerobic volume only — contributes to weekly km</span></div>
+    <div class="row"><span class="key">Just surviving</span><span class="val">Z2 / bonus volume only</span></div>
+    <div style="margin-top:10px; font-size:12px; color:var(--muted);">Only replace your dedicated interval session with class running if you're intentionally targeting pace. Otherwise keep both.</div>
+  </div>
+
+  <div class="section-label">Interval Run Progression (Block B)</div>
+  <div class="accordion">
+    <div class="accordion-header" onclick="toggleAcc(this)">
+      <span class="acc-title">📗 Weeks 1–4 · Base</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="accordion-body">
+      <div class="acc-row"><div class="acc-label">Wk 1</div>6×400 m @ ~5:15–5:20/km · 90–120 s jog recovery</div>
+      <div class="acc-row"><div class="acc-label">Wk 2</div>8×400 m same pace · 90 s jog</div>
+      <div class="acc-row"><div class="acc-label">Wk 3</div>5×600 m @ ~5:10–5:15/km · 2 min jog</div>
+      <div class="acc-row"><div class="acc-label">Wk 4</div>4×800 m @ ~5:10/km · 2–3 min jog</div>
+    </div>
+  </div>
+  <div class="accordion">
+    <div class="accordion-header" onclick="toggleAcc(this)">
+      <span class="acc-title">📙 Weeks 5–8 · Build</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="accordion-body">
+      <div class="acc-row"><div class="acc-label">Alternate</div>6×600 m @ ~5:00–5:05/km · 2 min jog</div>
+      <div class="acc-row"><div class="acc-label">Alternate</div>5×800 m @ ~5:00/km · 2–3 min jog</div>
+      <div class="acc-row"><div class="acc-label">Every 3rd wk</div>Compromised: 3–4 rounds of 500 m run + 20 wall balls or 40 m lunges · walk 2–3 min</div>
+      <div class="acc-row"><div class="acc-label">Target pace</div>~10–15 s/km faster than your intended HYROX race pace</div>
+    </div>
+  </div>
+  <div class="accordion">
+    <div class="accordion-header" onclick="toggleAcc(this)">
+      <span class="acc-title">📕 Weeks 9–11 · Peak</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="accordion-body">
+      <div class="acc-row"><div class="acc-label">Option A</div>4–5×800 m @ ~4:55–5:00/km · 2–3 min jog</div>
+      <div class="acc-row"><div class="acc-label">Option B</div>3–4×1 km @ target race pace · 3 min jog</div>
+      <div class="acc-row"><div class="acc-label">Intent</div>Lock in race pace. Validate: "Can I hold this after sleds and carries?"</div>
+    </div>
+  </div>
+  <div class="accordion">
+    <div class="accordion-header" onclick="toggleAcc(this)">
+      <span class="acc-title">🏁 Week 12 · Taper</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="accordion-body">
+      <div class="acc-row">2–3×400–600 m @ race effort · long easy warm-up and cool-down</div>
+    </div>
+  </div>
+
+  <div class="section-label">Long Run Progression (Block B)</div>
+  <div class="card">
+    <div class="row"><span class="key">Weeks 1–4</span><span class="val">45–50 min easy, +5–10 min/week to 60–70 min</span></div>
+    <div class="row"><span class="key">Weeks 5–8</span><span class="val">60–75 min. Option: last 10–15 min at steady pace (race pace +20–30 s/km)</span></div>
+    <div class="row"><span class="key">Weeks 9–11</span><span class="val">Two weeks at 70–80 min peak; one week shorter at ~50–60 min</span></div>
+    <div class="row"><span class="key">Week 12</span><span class="val">35–45 min easy only</span></div>
+  </div>
+</div>
+
+<!-- ========== SESSION MENU ========== -->
+<div id="page-sessions" class="page">
+  <div class="section-label">Filter by Type</div>
+  <div class="filter-row">
+    <button class="filter-btn active" onclick="filterSessions('all', this)">All</button>
+    <button class="filter-btn" onclick="filterSessions('run', this)">🏃 Run</button>
+    <button class="filter-btn" onclick="filterSessions('strength', this)">🏋️ Strength</button>
+    <button class="filter-btn" onclick="filterSessions('metcon', this)">🔥 Metcon</button>
+    <button class="filter-btn" onclick="filterSessions('recovery', this)">💤 Recovery</button>
+  </div>
+
+  <div id="session-list">
+    <div class="session-item" data-type="run">
+      <div class="s-name">Long Z2 Run</div>
+      <div class="s-desc">45–80 min easy, fully conversational. Core aerobic builder.</div>
+      <div class="s-tags tags"><span class="tag green">All blocks</span><span class="tag grey">Non-negotiable</span></div>
+    </div>
+    <div class="session-item" data-type="run">
+      <div class="s-name">Short Z2 / Easy Jog</div>
+      <div class="s-desc">20–30 min easy. Active recovery or interval substitute in Oly block.</div>
+      <div class="s-tags tags"><span class="tag green">All blocks</span><span class="tag grey">Recovery</span></div>
+    </div>
+    <div class="session-item" data-type="run">
+      <div class="s-name">Short Intervals</div>
+      <div class="s-desc">6–8×400 m @ ~5:10–5:20/km · 90 s jog recovery. Intro to speed.</div>
+      <div class="s-tags tags"><span class="tag blue">Block B base</span></div>
+    </div>
+    <div class="session-item" data-type="run">
+      <div class="s-name">Mid Intervals</div>
+      <div class="s-desc">5–6×600–800 m @ ~5:00/km · 2 min jog. Speed reserve building.</div>
+      <div class="s-tags tags"><span class="tag blue">Block B build</span></div>
+    </div>
+    <div class="session-item" data-type="run">
+      <div class="s-name">Race-Pace Repeats</div>
+      <div class="s-desc">3–4×1 km @ target HYROX race pace · 3 min jog. Lock in the pace.</div>
+      <div class="s-tags tags"><span class="tag green">Block B peak</span></div>
+    </div>
+    <div class="session-item" data-type="run">
+      <div class="s-name">Compromised Run</div>
+      <div class="s-desc">3–4 rounds: 500 m run + 20 wall balls or 40 m lunge · walk 2–3 min.</div>
+      <div class="s-tags tags"><span class="tag orange">Block B specific</span><span class="tag grey">Every 2–3 weeks</span></div>
+    </div>
+    <div class="session-item" data-type="run">
+      <div class="s-name">Tempo Run</div>
+      <div class="s-desc">20–30 min continuous @ comfortably hard (threshold). General fitness base.</div>
+      <div class="s-tags tags"><span class="tag blue">Block C</span></div>
+    </div>
+    <div class="session-item" data-type="strength">
+      <div class="s-name">RSP Session</div>
+      <div class="s-desc">Per RSP spreadsheet — back or front squat. High CNS demand.</div>
+      <div class="s-tags tags"><span class="tag purple">Block A (2×/wk)</span><span class="tag blue">Block C (2–3×/wk)</span></div>
+    </div>
+    <div class="session-item" data-type="strength">
+      <div class="s-name">Velocity Squat Session</div>
+      <div class="s-desc">5×5 @ 55–60% 1RM fast · 1×1 @ 80% · weekly RM ladder test.</div>
+      <div class="s-tags tags"><span class="tag green">Block B</span><span class="tag blue">Block C maintenance</span></div>
+    </div>
+    <div class="session-item" data-type="strength">
+      <div class="s-name">Front Squat Priority</div>
+      <div class="s-desc">Front squat main lift + Oly accessories (pulls, pause squats, footwork).</div>
+      <div class="s-tags tags"><span class="tag purple">Block A</span></div>
+    </div>
+    <div class="session-item" data-type="strength">
+      <div class="s-name">Gymnastics Skill Block</div>
+      <div class="s-desc">10–15 min fresh: pull-ups, push-ups, bar muscle-up drills, handstands, toes-to-bar. Do before squats.</div>
+      <div class="s-tags tags"><span class="tag blue">Block C</span><span class="tag grey">Skill-first</span></div>
+    </div>
+    <div class="session-item" data-type="strength">
+      <div class="s-name">HYROX Strength Day</div>
+      <div class="s-desc">Squats + walking lunges + heavy carries + wall balls. Power endurance.</div>
+      <div class="s-tags tags"><span class="tag green">Block B</span></div>
+    </div>
+    <div class="session-item" data-type="strength">
+      <div class="s-name">Functional Bodybuilding Class</div>
+      <div class="s-desc">Gym-programmed hypertrophy / push-pull. Structural balance work.</div>
+      <div class="s-tags tags"><span class="tag blue">Block C</span><span class="tag grey">Block D</span></div>
+    </div>
+    <div class="session-item" data-type="metcon">
+      <div class="s-name">HYROX Class</div>
+      <div class="s-desc">Stations + running. Progresses from technique → pace discipline → race sim.</div>
+      <div class="s-tags tags"><span class="tag green">Block B primary</span></div>
+    </div>
+    <div class="session-item" data-type="metcon">
+      <div class="s-name">CrossFit Class</div>
+      <div class="s-desc">General metcon, variable stimulus. Good for all blocks as conditioning filler.</div>
+      <div class="s-tags tags"><span class="tag green">All blocks</span></div>
+    </div>
+    <div class="session-item" data-type="metcon">
+      <div class="s-name">Short Sharp Metcon</div>
+      <div class="s-desc">10–15 min AMRAP/EMOM, upper-body bias or mixed. CNS-sparing.</div>
+      <div class="s-tags tags"><span class="tag purple">Block A</span><span class="tag grey">Low leg stress</span></div>
+    </div>
+    <div class="session-item" data-type="recovery">
+      <div class="s-name">Z2 Finisher</div>
+      <div class="s-desc">15–20 min easy bike or row after strength session. Active recovery.</div>
+      <div class="s-tags tags"><span class="tag green">Any block</span><span class="tag grey">Post-strength</span></div>
+    </div>
+    <div class="session-item" data-type="recovery">
+      <div class="s-name">Mobility / Stretching</div>
+      <div class="s-desc">Hip flexors, thoracic spine, ankles. 15–20 min. Especially post-race or red weeks.</div>
+      <div class="s-tags tags"><span class="tag grey">Block D</span><span class="tag grey">Red weeks</span></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ========== REFERENCES ========== -->
+<div id="page-references" class="page">
+  <div class="section-label">Why This Works</div>
+  <div class="accordion">
+    <div class="accordion-header" onclick="toggleAcc(this)">
+      <span class="acc-title">🧠 Program Design Decisions</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="accordion-body open">
+      <div class="why-box"><strong>Minimum viable dose:</strong> 2 runs + 1 squat + 1 metcon gives enough exposure to maintain running, strength, and conditioning without turning every week into a recovery problem.</div>
+      <div class="why-box"><strong>Modular blocks:</strong> Rotating emphasis blocks lets you progress one quality without peaking everything at once. Don't run the same block for more than 10–12 weeks — the variation itself is part of the stimulus.</div>
+      <div class="why-box"><strong>Classes as anchors:</strong> Gym classes are fixed stressors. Self-programming fills gaps, not competes. This prevents you from doubling up hard sessions on adjacent days.</div>
+      <div class="why-box"><strong>Quality filter for HYROX class running:</strong> Class running counts toward volume, but only replaces an interval run when you intentionally target pace on every split.</div>
+      <div class="why-box"><strong>Velocity squats in HYROX blocks:</strong> Submaximal load (55–60% 1RM) with fast bar speed preserves neuromuscular power with less residual fatigue than heavy slow reps — meaning you can run Runna's full plan without compromise.</div>
+      <div class="why-box"><strong>Skill before strength:</strong> Bodyweight and gymnastics skill work belongs early in the session while CNS is fresh. After heavy squats or a long run, movement quality degrades and so does skill acquisition.</div>
+      <div class="why-box"><strong>Oly block caution:</strong> Technical lifting has high neural demand. Running intensity and metcon volume need to drop so CNS resources go toward skill and power expression in the lifts.</div>
+    </div>
+  </div>
+
+  <div class="section-label">Training Tips</div>
+
+  <div class="accordion">
+    <div class="accordion-header" onclick="toggleAcc(this)">
+      <span class="acc-title">⏱️ Recovery Separation</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="accordion-body">
+      <div class="why-box"><strong>24+ hours between hard endurance and heavy strength</strong> yields better strength adaptations. If you must stack on the same day, do strength before endurance and fuel aggressively in between.</div>
+      <div class="why-box"><strong>Run club → next-day squats:</strong> Fine if squats stay lighter (RPE ≤7). Heavy build days are better 48 hrs after a hard interval session.</div>
+      <div class="why-box"><strong>HYROX metcon → next-day squats:</strong> Light squats (3×3 RPE 7) are manageable. Avoid heavy builds — wait 48 hrs.</div>
+      <div class="why-box"><strong>Limit to 2–3 genuinely hard sessions per week</strong> (e.g. run club, HYROX class, and one heavy strength day). Everything else should be easy.</div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="accordion-header" onclick="toggleAcc(this)">
+      <span class="acc-title">🍌 Fueling Around Concurrent Sessions</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="accordion-body">
+      <div class="why-box"><strong>Stacking endurance + strength same day:</strong> Fuel hard between sessions. Residual glycogen depletion from a run will tank your strength. Get carbs + protein in the gap.</div>
+      <div class="why-box"><strong>Example:</strong> Wednesday run club (6×600 m) → 200 kcal carb snack + electrolytes + 30 min rest → Thursday light squats is OK. Thursday heavy squats is risky without adequate refuelling.</div>
+      <div class="why-box"><strong>Fatigue-first squat days (Z2 jog then squats):</strong> Eat light before the jog (e.g. banana), then fuel properly for the main squat lift. You want pre-fatigued legs, not a glycogen-depleted engine.</div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="accordion-header" onclick="toggleAcc(this)">
+      <span class="acc-title">🏃 Race Pace Anchor</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="accordion-body">
+      <div class="why-box"><strong>Estimate your HYROX pace by Week 5–6.</strong> Run 3×1 km at a hard-but-controlled effort. Average the splits. Add 15–25 s/km to get your realistic HYROX race pace target.</div>
+      <div class="why-box"><strong>Example:</strong> You average 4:58/km unsupported → target HYROX race pace ≈ 5:13–5:23/km → use 5:15/km as your interval anchor in Block B.</div>
+      <div class="why-box"><strong>Your interval sessions should be ~10–15 s/km faster than race pace</strong> to build a speed reserve. In peak weeks, run repeats at or near race pace to lock it in.</div>
+      <div class="why-box"><strong>Revisit every 3–4 weeks.</strong> If unsupported pace drops, your race pace anchor drops too.</div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="accordion-header" onclick="toggleAcc(this)">
+      <span class="acc-title">🛑 Form Gates — When to Stop a Set</span>
+    </div>
+    <div class="accordion-body">
+      <div class="why-box"><strong>Squat:</strong> Stop if knees cave inward, butt tucks under, or bar drifts forward. Rest 2–3 min. Don't grind through degraded reps — they reinforce bad patterns.</div>
+      <div class="why-box"><strong>Lunge / Step-up:</strong> Stop if front knee drifts well past toes, trailing knee bounces off the floor, or torso collapses forward.</div>
+      <div class="why-box"><strong>Interval run:</strong> If stride shortens and cadence drops late in a rep, dial back pace by 10–15 s/km. Finish the session strong rather than accumulating garbage reps.</div>
+      <div class="why-box"><strong>HYROX metcon:</strong> If wall balls lose target height, or farmer carry lists severely to one side, finish the round then reassess pacing for the next one.</div>
+      <div class="why-box"><strong>For fatigue-resistance setups</strong> (Z2 → squats, HYROX → runs): keep load at 60–75% 1RM. Use volume, not weight, to create the stimulus.</div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="accordion-header" onclick="toggleAcc(this)">
+      <span class="acc-title">📅 Taper Week (Race Week)</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="accordion-body">
+      <div class="why-box"><strong>Philosophy:</strong> Maintain quality of movement and pace. Slash volume by 40–50%. You should feel sharp, not stale.</div>
+      <div class="why-box"><strong>Mon:</strong> 2–3×400 m at race pace. Long easy warm-up + cool-down. No metcon.</div>
+      <div class="why-box"><strong>Tue:</strong> 3×3 squat at RPE 6 (light, move fast). Light accessories only — no heavy carries or step-ups. Optional 15 min easy Z2 bike if legs feel flat.</div>
+      <div class="why-box"><strong>Wed:</strong> Easy jog 20–30 min. Station drills (SkiErg pacing, wall ball rhythm) at 60% effort.</div>
+      <div class="why-box"><strong>Thu:</strong> Rest or 15 min easy jog + stretching.</div>
+      <div class="why-box"><strong>Fri:</strong> 1–2×800 m at race pace (controlled, not all-out). Optional: 3 rounds of 500 m run at race pace + 1 station at 70% effort + easy transition walk.</div>
+      <div class="why-box"><strong>Race day:</strong> Warm-up jog, station drills, go.</div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="accordion-header" onclick="toggleAcc(this)">
+      <span class="acc-title">🔗 Multi-Race Strategy</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="accordion-body">
+      <div class="why-box"><strong>A-Race + B-Race:</strong> Use the B-Race as a fitness checkpoint, not all-out effort. Save peak pacing strategy for the A-Race.</div>
+      <div class="why-box"><strong>Suggested structure:</strong> Weeks 1–6 Build → Week 7 Light taper for B-Race → Week 8 Post-B-Race deload (50% volume) → Weeks 9–11 Peak for A-Race → Week 12 Taper.</div>
+      <div class="why-box"><strong>No race booked?</strong> A HYROX sim every 4–6 months in Block C or B is enough to test fitness and maintain race-specific conditioning.</div>
+    </div>
+  </div>
+
+  <div class="section-label">Helpful Links</div>
+  <div class="ref-list">
+    <div class="ref-item">
+      <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11688070/" target="_blank" rel="noopener noreferrer">Optimizing concurrent training programs: A review on factors</a>
+      <div class="ref-desc">Useful background for combining strength and endurance, sequencing stress, and interference management.</div>
+    </div>
+    <div class="ref-item">
+      <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12885173/" target="_blank" rel="noopener noreferrer">The effects, mechanisms, and influencing factors of concurrent training</a>
+      <div class="ref-desc">More detailed reference on why hybrid training needs smart volume control and exercise order.</div>
+    </div>
+    <div class="ref-item">
+      <a href="https://www.inov8.com/blog/post/hybrid-training-guide-for-athletes" target="_blank" rel="noopener noreferrer">Hybrid Training Guide for Athletes</a>
+      <div class="ref-desc">Practical hybrid athlete framing that supports the block-based and minimum-dose approach.</div>
+    </div>
+    <div class="ref-item">
+      <a href="https://www.catalystathletics.com/article/53/Plandomization-CrossFit-Periodization-and-Planning/" target="_blank" rel="noopener noreferrer">Catalyst Athletics — Plandomization</a>
+      <div class="ref-desc">Helpful for planning around CrossFit-style randomness and setting a clear training emphasis.</div>
+    </div>
+    <div class="ref-item">
+      <a href="https://districtlcrossfit.co.uk/developing-a-running-program-to-improve-your-hyrox-race/" target="_blank" rel="noopener noreferrer">Developing a Running Program to Improve Your HYROX Race</a>
+      <div class="ref-desc">Supports the dedicated run quality + long run structure for HYROX prep.</div>
+    </div>
+    <div class="ref-item">
+      <a href="https://rb100.fitness/articles/hyrox/periodisation-for-hyrox-training/" target="_blank" rel="noopener noreferrer">Periodisation for HYROX</a>
+      <div class="ref-desc">Supports the base → build → peak → taper logic inside the HYROX block.</div>
+    </div>
+    <div class="ref-item">
+      <a href="https://liftvault.com/programs/powerlifting/russian-squat-routine-spreadsheet/" target="_blank" rel="noopener noreferrer">Russian Squat Program overview</a>
+      <div class="ref-desc">Reference for the stress profile and intended use of RSP as a peaking tool rather than permanent weekly structure.</div>
+    </div>
+    <div class="ref-item">
+      <a href="https://www.castironstrength.com/russian-squat-routine/" target="_blank" rel="noopener noreferrer">Russian Squat Routine explanation</a>
+      <div class="ref-desc">Additional context for frequency and loading expectations.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ========== CHECKLIST ========== -->
+<div id="page-checklist" class="page">
+  <div class="section-label">Weekly Check-In</div>
+  <div class="card">
+    <div class="card-title">Non-Negotiables</div>
+    <ul class="checklist" id="weekly-checks">
+      <li>
+        <div class="check-box" onclick="toggleCheck(this)"></div>
+        <div><div>Long Z2 run completed</div><div class="sub-text">45–80 min easy, conversational</div></div>
+      </li>
+      <li>
+        <div class="check-box" onclick="toggleCheck(this)"></div>
+        <div><div>Quality run completed</div><div class="sub-text">Interval, tempo, or pace-targeted HYROX class</div></div>
+      </li>
+      <li>
+        <div class="check-box" onclick="toggleCheck(this)"></div>
+        <div><div>Squat / leg strength session</div><div class="sub-text">Per current squat program</div></div>
+      </li>
+      <li>
+        <div class="check-box" onclick="toggleCheck(this)"></div>
+        <div><div>Hard conditioning session</div><div class="sub-text">HYROX class, CrossFit, or metcon</div></div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="section-label">Load Check</div>
+  <div class="card">
+    <ul class="checklist">
+      <li>
+        <div class="check-box" onclick="toggleCheck(this)"></div>
+        <div><div>Fewer than 3 "I was smashed" days</div><div class="sub-text">If 3+, trim one session next week or swap for Z2</div></div>
+      </li>
+      <li>
+        <div class="check-box" onclick="toggleCheck(this)"></div>
+        <div><div>Quality runs hit their target stimulus</div><div class="sub-text">Right pace, right effort, right structure</div></div>
+      </li>
+      <li>
+        <div class="check-box" onclick="toggleCheck(this)"></div>
+        <div><div>No two consecutive hard sessions</div><div class="sub-text">Hard day → easy/rest day between</div></div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="section-label">Week Colour</div>
+  <div class="rpe-selector">
+    <button class="rpe-btn green-btn" onclick="selectRPE('green', this)">🟢 Green</button>
+    <button class="rpe-btn yellow-btn" onclick="selectRPE('yellow', this)">🟡 Yellow</button>
+    <button class="rpe-btn red-btn" onclick="selectRPE('red', this)">🔴 Red</button>
+  </div>
+  <div id="rpe-detail" class="rpe-detail" style="display:none;"></div>
+
+  <div style="margin-top:12px; text-align:center;">
+    <button onclick="resetChecklist()" style="background:none; border:1px solid var(--border); color:var(--muted); padding:8px 20px; border-radius:20px; font-size:13px; cursor:pointer;">Reset Week</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav button').forEach((b, i) => {
+    b.classList.remove('active');
+  });
+  const pages = ['home','blocks','squats','running','sessions','references','checklist'];
+  const idx = pages.indexOf(id);
+  if (idx >= 0) document.querySelectorAll('.nav button')[idx].classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showBlock(id) {
+  document.getElementById('block-list').style.display = 'none';
+  document.querySelectorAll('.block-detail').forEach(d => d.classList.remove('active'));
+  document.getElementById('block-' + id).classList.add('active');
+}
+
+function showBlockList() {
+  document.getElementById('block-list').style.display = 'block';
+  document.querySelectorAll('.block-detail').forEach(d => d.classList.remove('active'));
+}
+
+function toggleAcc(header) {
+  const body = header.nextElementSibling;
+  header.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+function filterSessions(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.session-item').forEach(item => {
+    item.style.display = (type === 'all' || item.dataset.type === type) ? 'block' : 'none';
+  });
+}
+
+function toggleCheck(box) {
+  box.classList.toggle('checked');
+}
+
+function selectRPE(color, btn) {
+  document.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const detail = document.getElementById('rpe-detail');
+  detail.style.display = 'block';
+  const content = {
+    green: { title: '🟢 Green Week — Progress', text: 'Everything feels controlled at RPE ≤6. Add reps, shave 5–10 s/km off pace, or add 5–10 kg to squat. Proceed with confidence.' },
+    yellow: { title: '🟡 Yellow Week — Hold', text: 'One session hit RPE 8–9, others were fine. Hold volume and pace. Focus on cleaner execution, not more load. Happens when life stress, sleep, or travel add up.' },
+    red: { title: '🔴 Red Week — Deload', text: 'Accumulated fatigue: heavy legs, sluggish runs, poor sleep recovery. Cut volume 30–50%. Keep everything at RPE ≤7. One hard session max. Two red weeks in a row? Reassess the plan.' }
+  };
+  const c = content[color];
+  detail.innerHTML = '<div class="rpe-title">' + c.title + '</div>' + c.text;
+}
+
+function resetChecklist() {
+  document.querySelectorAll('.check-box').forEach(b => b.classList.remove('checked'));
+  document.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('rpe-detail').style.display = 'none';
+}
+</script>
+
+</body>
+</html>
