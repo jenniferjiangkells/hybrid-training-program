@@ -750,12 +750,14 @@
 
 <!-- ========== SESSION MENU ========== -->
 <div id="page-sessions" class="page">
-  <div style="display:flex; align-items:baseline; justify-content:space-between;">
-    <div class="section-label" style="margin-bottom:6px;">Week Plan</div>
+
+  <!-- PLAN -->
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+    <span class="section-label" style="margin:0;">Week Plan</span>
     <button onclick="clearWeekPlan()" style="background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; padding:0;">Clear week</button>
   </div>
   <div id="week-day-strip" class="week-day-strip"></div>
-  <div id="week-selected-day" style="display:none; background:var(--surface); border:1px solid var(--accent); border-radius:var(--radius); padding:10px 12px; margin-bottom:10px;">
+  <div id="week-selected-day" style="display:none; background:var(--surface); border:1px solid var(--accent); border-radius:var(--radius); padding:10px 12px; margin-bottom:4px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <span id="week-selected-label" style="font-size:13px; font-weight:600; color:var(--accent);"></span>
       <button onclick="deselectDay()" style="background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; padding:0;">done</button>
@@ -764,9 +766,15 @@
     <div id="week-selected-empty" style="font-size:12px; color:var(--muted); display:none;">Nothing planned — add sessions below</div>
   </div>
 
-  <input id="session-search" type="search" placeholder="Search sessions…" oninput="applyFilters()" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:9px 12px; border-radius:8px; font-size:13px; margin-bottom:10px; font-family:var(--font);">
+  <!-- DIVIDER -->
+  <div style="display:flex; align-items:center; gap:10px; margin:18px 0 14px;">
+    <div style="flex:1; height:1px; background:var(--border);"></div>
+    <span style="font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted);">Session Library</span>
+    <div style="flex:1; height:1px; background:var(--border);"></div>
+  </div>
 
-  <div class="section-label" style="margin-bottom:6px;">Filter by Type</div>
+  <!-- BROWSE -->
+  <input id="session-search" type="search" placeholder="Search sessions…" oninput="applyFilters()" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:9px 12px; border-radius:8px; font-size:13px; margin-bottom:10px; font-family:var(--font);">
   <div class="filter-row" style="margin-bottom:8px;">
     <button class="filter-btn active" data-type="all" onclick="filterSessions('all', this)">All</button>
     <button class="filter-btn" data-type="run" onclick="filterSessions('run', this)">🏃 Run</button>
@@ -775,22 +783,25 @@
     <button class="filter-btn" data-type="recovery" onclick="filterSessions('recovery', this)">💤 Recovery</button>
     <button class="filter-btn" data-type="custom" onclick="filterSessions('custom', this)">⭐ Custom</button>
   </div>
-  <div id="tag-cloud" style="margin-bottom:10px;"></div>
+  <div id="tag-cloud" style="margin-bottom:12px;"></div>
 
-  <div id="add-session-form" class="card" style="margin-bottom:12px;">
-    <div class="card-title">Add Custom Session</div>
-    <input id="cs-name" type="text" placeholder="Session name" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; margin-bottom:6px;">
-    <input id="cs-desc" type="text" placeholder="Description (optional)" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px;">
-    <div style="border-top:1px solid var(--border); margin:10px 0;"></div>
-    <select id="cs-type" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; margin-bottom:10px;">
-      <option value="strength">🏋️ Strength</option>
-      <option value="run">🏃 Run</option>
-      <option value="metcon">🔥 Metcon</option>
-      <option value="recovery">💤 Recovery</option>
-    </select>
-    <div id="cs-tag-picker" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
-    <div style="border-top:1px solid var(--border); margin:10px 0;"></div>
-    <button onclick="addCustomSession()" style="background:var(--accent); color:#000; border:none; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">+ Add</button>
+  <!-- ADD CUSTOM (collapsed by default) -->
+  <div style="margin-bottom:12px;">
+    <button onclick="toggleCustomForm()" id="cs-toggle-btn" style="background:none; border:1px dashed var(--border); color:var(--muted); width:100%; padding:8px; border-radius:8px; font-size:13px; cursor:pointer; text-align:center;">+ Add custom session</button>
+    <div id="add-session-form" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-top:6px;">
+      <input id="cs-name" type="text" placeholder="Session name" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; margin-bottom:6px;">
+      <input id="cs-desc" type="text" placeholder="Description (optional)" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px;">
+      <div style="border-top:1px solid var(--border); margin:10px 0;"></div>
+      <select id="cs-type" style="width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; margin-bottom:10px;">
+        <option value="strength">🏋️ Strength</option>
+        <option value="run">🏃 Run</option>
+        <option value="metcon">🔥 Metcon</option>
+        <option value="recovery">💤 Recovery</option>
+      </select>
+      <div id="cs-tag-picker" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+      <div style="border-top:1px solid var(--border); margin:10px 0;"></div>
+      <button onclick="addCustomSession()" style="background:var(--accent); color:#000; border:none; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">+ Add</button>
+    </div>
   </div>
 
   <div id="session-list">
@@ -1548,6 +1559,16 @@ let customSessions = [];
 
 const TAG_COLOUR = { run:'green', strength:'blue', metcon:'orange', recovery:'grey', custom:'grey' };
 
+function toggleCustomForm() {
+  const form = document.getElementById('add-session-form');
+  const btn = document.getElementById('cs-toggle-btn');
+  const open = form.style.display === 'none';
+  form.style.display = open ? 'block' : 'none';
+  btn.textContent = open ? '× cancel' : '+ Add custom session';
+  btn.style.color = open ? 'var(--muted)' : 'var(--muted)';
+  if (open) renderCsTagPicker();
+}
+
 let csSelectedTags = new Set();
 
 function renderCsTagPicker() {
@@ -1581,7 +1602,8 @@ function addCustomSession() {
   document.getElementById('cs-name').value = '';
   document.getElementById('cs-desc').value = '';
   csSelectedTags.clear();
-  renderCsTagPicker();
+  document.getElementById('add-session-form').style.display = 'none';
+  document.getElementById('cs-toggle-btn').textContent = '+ Add custom session';
 }
 
 function deleteCustomSession(id) {
