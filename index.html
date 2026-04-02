@@ -231,13 +231,21 @@
   .ref-item .ref-desc { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.6; }
   .why-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-top: 10px; font-size: 13px; line-height: 1.7; }
 
+  /* SYNC DOT */
+  .sync-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); display:inline-block; margin-left:8px; vertical-align:middle; flex-shrink:0; }
+  .sync-dot.connected { background:#4caf50; }
+  .sync-dot.error { background:#f44336; }
 </style>
+
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 <body>
 
 <div class="header">
   <h1>Hybrid Training System</h1>
-  <p>Modular · Goal-driven · Class-compatible</p>
+  <p style="display:flex; align-items:center; gap:0;">Modular · Goal-driven · Class-compatible<span id="sync-dot" class="sync-dot" title="Sync status"></span></p>
 </div>
 
 <nav class="nav">
@@ -598,6 +606,26 @@
 
 <!-- ========== SQUATS ========== -->
 <div id="page-squats" class="page">
+  <div class="section-label">1RM Calculator</div>
+  <div class="card">
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+      <input id="orm-weight" type="number" placeholder="Weight (kg)" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; width:130px;">
+      <input id="orm-reps" type="number" placeholder="Reps" min="1" max="20" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; width:80px;">
+      <button onclick="calcORM()" style="background:var(--accent); color:#000; border:none; padding:8px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">Calculate</button>
+    </div>
+    <div id="orm-result" style="display:none;">
+      <div style="font-size:22px; font-weight:700; margin-bottom:8px;">Est. 1RM: <span id="orm-1rm" style="color:var(--accent)"></span> kg</div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px;">
+        <div class="prog-stat"><div class="stat-label">90%</div><div class="stat-val" id="orm-90"></div></div>
+        <div class="prog-stat"><div class="stat-label">80%</div><div class="stat-val" id="orm-80"></div></div>
+        <div class="prog-stat"><div class="stat-label">70%</div><div class="stat-val" id="orm-70"></div></div>
+        <div class="prog-stat"><div class="stat-label">60%</div><div class="stat-val" id="orm-60"></div></div>
+        <div class="prog-stat"><div class="stat-label">55%</div><div class="stat-val" id="orm-55"></div></div>
+        <div class="prog-stat"><div class="stat-label">50%</div><div class="stat-val" id="orm-50"></div></div>
+      </div>
+    </div>
+  </div>
+
   <div class="section-label">Your Programs</div>
 
   <div class="prog-card">
@@ -632,26 +660,6 @@
     <div class="row"><span class="key">Run compat.</span><span class="val">Fully compatible with Runna 2×/week + HYROX classes</span></div>
     <div class="row"><span class="key">Why it works</span><span class="val">Speed focus trains power output on fatigued legs — exactly what HYROX demands</span></div>
     <div class="row"><span class="key">RM testing</span><span class="val">Weekly ladder (10RM → 8RM → ... → 1RM) gives clear progress signal</span></div>
-  </div>
-
-  <div class="section-label">1RM Calculator</div>
-  <div class="card">
-    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
-      <input id="orm-weight" type="number" placeholder="Weight (kg)" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; width:130px;">
-      <input id="orm-reps" type="number" placeholder="Reps" min="1" max="20" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:13px; width:80px;">
-      <button onclick="calcORM()" style="background:var(--accent); color:#000; border:none; padding:8px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">Calculate</button>
-    </div>
-    <div id="orm-result" style="display:none;">
-      <div style="font-size:22px; font-weight:700; margin-bottom:8px;">Est. 1RM: <span id="orm-1rm" style="color:var(--accent)"></span> kg</div>
-      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px;">
-        <div class="prog-stat"><div class="stat-label">90%</div><div class="stat-val" id="orm-90"></div></div>
-        <div class="prog-stat"><div class="stat-label">80%</div><div class="stat-val" id="orm-80"></div></div>
-        <div class="prog-stat"><div class="stat-label">70%</div><div class="stat-val" id="orm-70"></div></div>
-        <div class="prog-stat"><div class="stat-label">60%</div><div class="stat-val" id="orm-60"></div></div>
-        <div class="prog-stat"><div class="stat-label">55%</div><div class="stat-val" id="orm-55"></div></div>
-        <div class="prog-stat"><div class="stat-label">50%</div><div class="stat-val" id="orm-50"></div></div>
-      </div>
-    </div>
   </div>
 
   <div class="section-label">Pairing Matrix</div>
@@ -1123,6 +1131,88 @@
 </main>
 
 <script>
+// ============================================================
+// FIREBASE CONFIG
+// 1. Go to https://console.firebase.google.com
+// 2. Create a project → Add a web app → copy the config below
+// 3. In the project console: Build → Realtime Database → Create database
+//    Start in test mode (you can lock it down later)
+// 4. Leave apiKey as "YOUR_API_KEY" to run offline-only (localStorage fallback)
+// ============================================================
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA8QqnKCHooRTNrUN5QM4H9NgFGDqVAEh8",
+  authDomain: "hybrid-training-plan-91ad6.firebaseapp.com",
+  databaseURL: "https://hybrid-training-plan-91ad6-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "hybrid-training-plan-91ad6",
+  storageBucket: "hybrid-training-plan-91ad6.firebasestorage.app",
+  messagingSenderId: "829859671186",
+  appId: "1:829859671186:web:f064018cc01a0347efca4b"
+};
+
+let sharedRef = null;
+let remoteUpdate = false; // guard: prevents listener from triggering writes back
+
+function syncDot(state) {
+  const dot = document.getElementById('sync-dot');
+  if (!dot) return;
+  dot.className = 'sync-dot' + (state === 'connected' ? ' connected' : state === 'error' ? ' error' : '');
+  dot.title = state === 'connected' ? 'Synced' : state === 'error' ? 'Sync error' : 'Offline (localStorage only)';
+}
+
+if (FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY') {
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.database();
+    sharedRef = db.ref('shared');
+
+    // Real-time listener — fires on load and whenever partner makes a change
+    sharedRef.on('value', snapshot => {
+      const data = snapshot.val();
+      if (!data) { syncDot('connected'); return; }
+      remoteUpdate = true;
+      if (data.builderBlocks !== undefined) {
+        builderBlocks = data.builderBlocks || [];
+        localStorage.setItem('builderChain', JSON.stringify(builderBlocks));
+        renderBuilderChain();
+      }
+      if (data.currentBuilderIdx !== undefined) {
+        localStorage.setItem('currentBuilderIdx', data.currentBuilderIdx);
+      }
+      if (data.currentWeek !== undefined) {
+        localStorage.setItem('currentWeek', data.currentWeek);
+      }
+      if (data.builderBlocks !== undefined || data.currentBuilderIdx !== undefined || data.currentWeek !== undefined) {
+        restoreCurrentBlock();
+        renderBuilderChain();
+      }
+      if (data.weekPlan !== undefined) {
+        weekPlan = data.weekPlan || { mon:[], tue:[], wed:[], thu:[], fri:[], sat:[], sun:[] };
+        localStorage.setItem('weekPlan', JSON.stringify(weekPlan));
+        renderDayStrip();
+      }
+      remoteUpdate = false;
+      syncDot('connected');
+    }, err => {
+      console.error('Firebase sync error:', err);
+      syncDot('error');
+    });
+
+    // Connection state indicator
+    db.ref('.info/connected').on('value', snap => {
+      if (!snap.val()) syncDot('error');
+    });
+
+  } catch (e) {
+    console.error('Firebase init error:', e);
+    syncDot('error');
+  }
+}
+
+function writeShared(patch) {
+  if (remoteUpdate || !sharedRef) return;
+  sharedRef.update(patch).catch(e => { console.error('Firebase write error:', e); syncDot('error'); });
+}
+
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
@@ -1375,6 +1465,7 @@ function clearWeekPlan() {
 
 function saveWeekPlan() {
   localStorage.setItem('weekPlan', JSON.stringify(weekPlan));
+  writeShared({ weekPlan });
 }
 
 function restoreWeekPlan() {
@@ -1528,6 +1619,7 @@ function renderBuilderChain() {
 
 function saveBuilderChain() {
   localStorage.setItem('builderChain', JSON.stringify(builderBlocks));
+  writeShared({ builderBlocks });
 }
 
 function restoreBuilderChain() {
@@ -1539,6 +1631,7 @@ function restoreBuilderChain() {
 function setCurrentBlock(idx) {
   localStorage.setItem('currentBuilderIdx', idx);
   const week = localStorage.getItem('currentWeek') || '';
+  writeShared({ currentBuilderIdx: idx, currentWeek: week });
   updateBlockDisplay(idx, week);
   renderBuilderChain();
 }
@@ -1546,6 +1639,7 @@ function setCurrentBlock(idx) {
 function setCurrentWeek(week) {
   localStorage.setItem('currentWeek', week);
   const idx = parseInt(localStorage.getItem('currentBuilderIdx'));
+  writeShared({ currentWeek: week, currentBuilderIdx: isNaN(idx) ? null : idx });
   updateBlockDisplay(idx, week);
   renderBuilderChain();
 }
@@ -1679,9 +1773,12 @@ restoreChecklist();
 restoreCustomSessions();
 renderTagCloud();
 renderCsTagPicker();
-restoreBuilderChain();
-restoreCurrentBlock();
-restoreWeekPlan();
+// Shared state: Firebase listener handles load when configured; fall back to localStorage otherwise
+if (!sharedRef) {
+  restoreBuilderChain();
+  restoreCurrentBlock();
+  restoreWeekPlan();
+}
 </script>
 
 </body>
