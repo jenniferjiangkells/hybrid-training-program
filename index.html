@@ -147,6 +147,26 @@
   .chain-content .c-name { font-size: 14px; font-weight: 600; }
   .chain-content .c-dur { font-size: 12px; color: var(--muted); margin-top: 1px; }
 
+  /* PLAN BUILDER */
+  .builder-palette { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .palette-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:7px 12px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; transition:background 0.15s; }
+  .palette-btn:active { background:var(--accent); color:#000; }
+  .builder-chain { display:flex; flex-direction:column; gap:0; }
+  .builder-item { display:flex; align-items:stretch; gap:12px; cursor:grab; touch-action:none; }
+  .builder-item.dragging { opacity:0.4; }
+  .builder-item.drag-over { border-top:2px solid var(--accent); }
+  .builder-item .b-line { display:flex; flex-direction:column; align-items:center; }
+  .builder-item .b-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:6px; }
+  .builder-item .b-connector { width:2px; background:var(--border); flex:1; min-height:16px; }
+  .builder-item:last-child .b-connector { display:none; }
+  .builder-item .b-content { flex:1; padding-bottom:14px; }
+  .builder-item .b-name { font-size:14px; font-weight:600; }
+  .builder-item .b-note { font-size:12px; color:var(--muted); background:none; border:none; border-bottom:1px solid transparent; outline:none; width:100%; margin-top:2px; font-family:var(--font); color:var(--muted); cursor:text; padding:0; }
+  .builder-item .b-note:focus { border-bottom-color:var(--border); color:var(--text); }
+  .builder-item .b-delete { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:0 4px; align-self:flex-start; margin-top:2px; line-height:1; }
+  .builder-item .b-delete:hover { color:var(--red); }
+  .builder-drag-handle { color:var(--muted); font-size:14px; align-self:flex-start; margin-top:5px; cursor:grab; user-select:none; padding-right:2px; }
+
   /* SQUAT PROGRAMS */
   .prog-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; }
   .prog-card .prog-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
@@ -243,6 +263,22 @@
       </select>
       <button onclick="saveCurrentBlock()" style="background:var(--accent); color:#000; border:none; padding:6px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">Save</button>
     </div>
+  </div>
+
+  <div class="section-label">Plan Builder</div>
+  <div class="card" style="padding-bottom:12px;">
+    <div class="card-title">Build Your Block Chain</div>
+    <div class="builder-palette">
+      <button class="palette-btn" onclick="addBuilderBlock('oly')">🏋️ Block A</button>
+      <button class="palette-btn" onclick="addBuilderBlock('hyrox')">🏁 Block B</button>
+      <button class="palette-btn" onclick="addBuilderBlock('strength')">💪 Block C</button>
+      <button class="palette-btn" onclick="addBuilderBlock('deload')">🔄 Block D</button>
+      <button class="palette-btn" onclick="addBuilderBlock('race')">🏆 Race / Sim</button>
+    </div>
+    <div id="builder-chain" class="builder-chain">
+      <div id="builder-empty" style="color:var(--muted); font-size:13px; padding:12px 0; text-align:center;">Tap a block above to start your chain</div>
+    </div>
+    <div id="builder-total" style="display:none; font-size:12px; color:var(--muted); padding-top:4px; border-top:1px solid var(--border); margin-top:4px;"></div>
   </div>
 
   <div class="section-label">Block Structure</div>
@@ -1098,6 +1134,139 @@ function resetChecklist() {
   localStorage.removeItem('weekColour');
 }
 
+// --- Plan Builder ---
+const BLOCK_DEFS = {
+  oly:      { name:'🏋️ Block A — Oly Focus',    note:'8 weeks · RSP 2×/week on front squat', dot:'#c084fc' },
+  hyrox:    { name:'🏁 Block B — HYROX Prep',    note:'8 weeks · velocity squats + full Runna', dot:'#47c8ff' },
+  strength: { name:'💪 Block C — Strength Base', note:'6 weeks · RSP 2–3×/week · squat PR goal', dot:'#e8ff47' },
+  deload:   { name:'🔄 Block D — Deload',         note:'2 weeks · recover + reassess', dot:'#888' },
+  race:     { name:'🏆 Race / Sim',               note:'Test your fitness', dot:'#4caf50' },
+};
+
+let builderBlocks = [];
+let dragSrcIdx = null;
+
+function addBuilderBlock(type) {
+  const def = BLOCK_DEFS[type];
+  builderBlocks.push({ type, note: def.note });
+  renderBuilderChain();
+  saveBuilderChain();
+}
+
+function removeBuilderBlock(idx) {
+  builderBlocks.splice(idx, 1);
+  renderBuilderChain();
+  saveBuilderChain();
+}
+
+function updateBuilderNote(idx, val) {
+  builderBlocks[idx].note = val;
+  saveBuilderChain();
+}
+
+function renderBuilderChain() {
+  const container = document.getElementById('builder-chain');
+  const empty = document.getElementById('builder-empty');
+  const total = document.getElementById('builder-total');
+
+  if (builderBlocks.length === 0) {
+    container.innerHTML = '';
+    container.appendChild(empty);
+    empty.style.display = 'block';
+    total.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  container.innerHTML = '';
+
+  builderBlocks.forEach((b, i) => {
+    const def = BLOCK_DEFS[b.type];
+    const item = document.createElement('div');
+    item.className = 'builder-item';
+    item.draggable = true;
+    item.dataset.idx = i;
+    item.innerHTML = `
+      <span class="builder-drag-handle" title="Drag to reorder">⠿</span>
+      <div class="b-line"><div class="b-dot" style="background:${def.dot}"></div><div class="b-connector"></div></div>
+      <div class="b-content">
+        <div class="b-name">${def.name}</div>
+        <input class="b-note" value="${b.note.replace(/"/g,'&quot;')}" placeholder="Add a note…" oninput="updateBuilderNote(${i}, this.value)">
+      </div>
+      <button class="b-delete" onclick="removeBuilderBlock(${i})" title="Remove">×</button>`;
+
+    // Desktop drag
+    item.addEventListener('dragstart', e => { dragSrcIdx = i; item.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+    item.addEventListener('dragover', e => { e.preventDefault(); item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      if (dragSrcIdx === null || dragSrcIdx === i) return;
+      const moved = builderBlocks.splice(dragSrcIdx, 1)[0];
+      builderBlocks.splice(i, 0, moved);
+      dragSrcIdx = null;
+      renderBuilderChain();
+      saveBuilderChain();
+    });
+
+    // Touch drag
+    let touchStartY = 0, touchItem = null;
+    item.addEventListener('touchstart', e => {
+      touchStartY = e.touches[0].clientY;
+      touchItem = item;
+      dragSrcIdx = i;
+    }, { passive: true });
+    item.addEventListener('touchmove', e => {
+      e.preventDefault();
+      const y = e.touches[0].clientY;
+      const els = [...document.querySelectorAll('.builder-item')];
+      els.forEach(el => el.classList.remove('drag-over'));
+      const target = els.find(el => {
+        const r = el.getBoundingClientRect();
+        return y >= r.top && y <= r.bottom && el !== touchItem;
+      });
+      if (target) target.classList.add('drag-over');
+    }, { passive: false });
+    item.addEventListener('touchend', e => {
+      const y = e.changedTouches[0].clientY;
+      const els = [...document.querySelectorAll('.builder-item')];
+      els.forEach(el => el.classList.remove('drag-over'));
+      const target = els.find(el => {
+        const r = el.getBoundingClientRect();
+        return y >= r.top && y <= r.bottom && el !== touchItem;
+      });
+      if (target && dragSrcIdx !== null) {
+        const toIdx = parseInt(target.dataset.idx);
+        if (toIdx !== dragSrcIdx) {
+          const moved = builderBlocks.splice(dragSrcIdx, 1)[0];
+          builderBlocks.splice(toIdx, 0, moved);
+          renderBuilderChain();
+          saveBuilderChain();
+        }
+      }
+      dragSrcIdx = null;
+    });
+
+    container.appendChild(item);
+  });
+
+  // Total weeks
+  const weekMap = { oly:8, hyrox:8, strength:6, deload:2, race:0 };
+  const wks = builderBlocks.reduce((s, b) => s + (weekMap[b.type] || 0), 0);
+  total.style.display = 'block';
+  total.textContent = `Total: ~${wks} weeks` + (wks > 0 ? ` (~${(wks/4).toFixed(1)} months)` : '');
+}
+
+function saveBuilderChain() {
+  localStorage.setItem('builderChain', JSON.stringify(builderBlocks));
+}
+
+function restoreBuilderChain() {
+  const saved = localStorage.getItem('builderChain');
+  if (saved) { builderBlocks = JSON.parse(saved); renderBuilderChain(); }
+}
+
 // --- Current block indicator ---
 function saveCurrentBlock() {
   const block = document.getElementById('block-select').value;
@@ -1158,6 +1327,7 @@ if (lastPage) showPage(lastPage);
 restoreChecklist();
 restoreCurrentBlock();
 restoreNotes();
+restoreBuilderChain();
 </script>
 
 </body>
