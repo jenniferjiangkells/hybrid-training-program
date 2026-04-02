@@ -277,9 +277,8 @@
       <button class="palette-btn" onclick="addBuilderBlock('deload')">🔄 Block D</button>
       <button class="palette-btn" onclick="addBuilderBlock('race')">🏆 Race / Sim</button>
     </div>
-    <div id="builder-chain" class="builder-chain">
-      <div id="builder-empty" style="color:var(--muted); font-size:13px; padding:12px 0; text-align:center;">Tap a block above to start your chain</div>
-    </div>
+    <div id="builder-empty" style="color:var(--muted); font-size:13px; padding:12px 0; text-align:center;">Tap a block above to start your chain</div>
+    <div id="builder-chain" class="builder-chain"></div>
     <div id="builder-total" style="display:none; font-size:12px; color:var(--muted); padding-top:4px; border-top:1px solid var(--border); margin-top:4px;"></div>
   </div>
 
@@ -1173,15 +1172,13 @@ function renderBuilderChain() {
   const empty = document.getElementById('builder-empty');
   const total = document.getElementById('builder-total');
 
+  container.innerHTML = '';
   if (builderBlocks.length === 0) {
-    container.innerHTML = '';
-    container.appendChild(empty);
     empty.style.display = 'block';
     total.style.display = 'none';
     return;
   }
   empty.style.display = 'none';
-  container.innerHTML = '';
 
   builderBlocks.forEach((b, i) => {
     const def = BLOCK_DEFS[b.type];
