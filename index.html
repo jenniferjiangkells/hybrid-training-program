@@ -200,7 +200,7 @@
   .builder-item:last-child .b-connector { display:none; }
   .builder-item .b-content { flex:1; padding-bottom:14px; }
   .builder-item .b-name { font-size:14px; font-weight:600; }
-  .builder-item .b-note { font-size:12px; color:var(--muted); background:none; border:none; border-bottom:1px solid transparent; outline:none; width:100%; margin-top:2px; font-family:var(--font); color:var(--muted); cursor:text; padding:0; }
+  .builder-item .b-note { font-size:12px; color:var(--muted); background:none; border:none; border-bottom:1px solid transparent; outline:none; width:100%; margin-top:2px; font-family:var(--font); padding:0; }
   .builder-item .b-note:focus { border-bottom-color:var(--border); color:var(--text); }
   .builder-item .b-delete { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:4px 8px; align-self:flex-start; margin-top:0; line-height:1; }
   .builder-item .b-delete:hover, .builder-item .b-delete:active { color:var(--red); }
@@ -1476,11 +1476,11 @@ function restoreWeekPlan() {
 
 // --- Plan Builder ---
 const BLOCK_DEFS = {
-  oly:      { name:'🏋️ Block A — Oly Focus',    note:'8 weeks · RSP 2×/week on front squat', dot:'#c084fc' },
-  hyrox:    { name:'🏁 Block B — HYROX Prep',    note:'8 weeks · velocity squats + full Runna', dot:'#47c8ff' },
-  strength: { name:'💪 Block C — Strength Base', note:'6 weeks · RSP 2–3×/week · squat PR goal', dot:'#e8ff47' },
-  deload:   { name:'🔄 Block D — Deload',         note:'2 weeks · recover + reassess', dot:'#888' },
-  race:     { name:'🏆 Race / Sim',               note:'Test your fitness', dot:'#4caf50' },
+  oly:      { name:'🏋️ Block A — Oly Focus',    note:'RSP 2×/week on front squat', dot:'#c084fc', weeks:8 },
+  hyrox:    { name:'🏁 Block B — HYROX Prep',    note:'Velocity squats + full Runna', dot:'#47c8ff', weeks:8 },
+  strength: { name:'💪 Block C — Strength Base', note:'RSP 2–3×/week · squat PR goal', dot:'#e8ff47', weeks:6 },
+  deload:   { name:'🔄 Block D — Deload',         note:'Recover + reassess', dot:'#888', weeks:2 },
+  race:     { name:'🏆 Race / Sim',               note:'Test your fitness', dot:'#4caf50', weeks:0 },
 };
 
 let builderBlocks = [];
@@ -1488,7 +1488,7 @@ let dragSrcIdx = null;
 
 function addBuilderBlock(type) {
   const def = BLOCK_DEFS[type];
-  builderBlocks.push({ type, note: def.note });
+  builderBlocks.push({ type, weeks: def.weeks, note: def.note });
   renderBuilderChain();
   saveBuilderChain();
 }
@@ -1502,6 +1502,16 @@ function removeBuilderBlock(idx) {
 function updateBuilderNote(idx, val) {
   builderBlocks[idx].note = val;
   saveBuilderChain();
+}
+
+function updateBuilderWeeks(idx, val) {
+  builderBlocks[idx].weeks = Math.max(1, parseInt(val) || 1);
+  saveBuilderChain();
+  // update total display without full re-render
+  const weekMap = { oly:8, hyrox:8, strength:6, deload:2, race:0 };
+  const wks = builderBlocks.reduce((s, b) => s + (b.weeks ?? weekMap[b.type] ?? 0), 0);
+  const total = document.getElementById('builder-total');
+  if (total) total.textContent = `Total: ~${wks} weeks` + (wks > 0 ? ` (~${(wks/4).toFixed(1)} months)` : '');
 }
 
 function renderBuilderChain() {
@@ -1533,7 +1543,11 @@ function renderBuilderChain() {
       <div class="b-line"><div class="b-dot" style="background:${isCurrent ? 'var(--accent)' : def.dot}"></div><div class="b-connector"></div></div>
       <div class="b-content">
         <div class="b-name">${isCurrent ? '▶ ' : ''}${def.name}</div>
-        <input class="b-note" value="${b.note.replace(/"/g,'&quot;')}" placeholder="Add a note…" oninput="updateBuilderNote(${i}, this.value)">
+        <input class="b-note" value="${(b.note ?? def.note).replace(/"/g,'&quot;')}" placeholder="${def.note}" oninput="updateBuilderNote(${i}, this.value)">
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+          ${b.type !== 'race' ? `<span style="font-size:12px;color:var(--muted);">weeks:</span>
+          <input type="number" min="1" max="52" value="${b.weeks ?? def.weeks}" onchange="updateBuilderWeeks(${i}, this.value)" style="width:48px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:6px;font-size:12px;">` : ''}
+        </div>
         ${isCurrent ? `<div style="margin-top:6px;display:flex;gap:6px;align-items:center;">
           <select onchange="setCurrentWeek(this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:12px;">${weekOptions}</select>
           <span style="font-size:12px;color:var(--accent);">${currentWeek || 'pick a week'}</span>
@@ -1612,7 +1626,7 @@ function renderBuilderChain() {
 
   // Total weeks
   const weekMap = { oly:8, hyrox:8, strength:6, deload:2, race:0 };
-  const wks = builderBlocks.reduce((s, b) => s + (weekMap[b.type] || 0), 0);
+  const wks = builderBlocks.reduce((s, b) => s + (b.weeks ?? weekMap[b.type] ?? 0), 0);
   total.style.display = 'block';
   total.textContent = `Total: ~${wks} weeks` + (wks > 0 ? ` (~${(wks/4).toFixed(1)} months)` : '');
 }
